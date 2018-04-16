@@ -11,6 +11,7 @@ set (SOURCES
 		src/SolARSBPatternReIndexer.cpp
 		src/SolARKeypointsReIndexer.cpp
 		src/SolARModuleTools.cpp
+		src/SolARPoseHelper.cpp
 		src/SolARModuleManagerTools.cpp
 	)
 ##################################################
