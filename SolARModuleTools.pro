@@ -43,6 +43,7 @@ interfaces/SolARHomographyValidation.h \
 interfaces/SolARSBPatternReIndexer.h \
 interfaces/SolARKeypointsReIndexer.h \
 interfaces/SolARModuleManagerTools.h \
+interfaces/SolARPoseHelper.h \
 interfaces/SolARToolsAPI.h
 
 SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
@@ -52,6 +53,7 @@ SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
     src/SolARSBPatternReIndexer.cpp \
     src/SolARKeypointsReIndexer.cpp \
     src/SolARModuleTools.cpp \
+	src/SolARPoseHelper.cpp \
     src/SolARModuleManagerTools.cpp
 
 unix {
