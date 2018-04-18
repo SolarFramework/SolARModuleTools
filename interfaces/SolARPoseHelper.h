@@ -41,7 +41,7 @@ public:
 	/// @brief Transform a Pose into the reference frame of another Pose
 	/// @param referencePose : The Pose to use as a reference frame
 	/// @param pose : the Pose to transform into the frame of referencePose
-	static Pose transformPose(const Pose& referencePose, const Pose& pose);
+	static Pose changeReference(const Pose& referencePose, const Pose& pose);
 
 	/// @brief Recover Euler angles of the Pose's rotation
 	/// @return A vector with rotation angles, in radians, with index 0 = rotation around the X-axis, 1 = rotation around Y-axis, 2 = rotation around the Z-axis.

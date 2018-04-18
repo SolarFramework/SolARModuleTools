@@ -40,7 +40,7 @@ Vector4f SolARPoseHelper::transformPoint(const Pose& pose, const Vector4f& point
 	return pose.getPoseTransform() * point;
 }
 
-Pose SolARPoseHelper::transformPose(const Pose& referencePose, const Pose& pose)
+Pose SolARPoseHelper::changeReference(const Pose& referencePose, const Pose& pose)
 {
 	Transform3Df referenceInverse = referencePose.getPoseTransform().inverse();
 	Transform3Df transform = pose.getPoseTransform();
