@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <xpcf-registry>
     <container uuid="28b89d39-41bd-451d-b19e-d25a3d7c5797" filepath="D:/BCOMDEVROOT/bcomBuild/SolARModuleTools/1.0.0/lib/x86_64/shared/release/SolARModuleTools.dll">
-        <component uuid="edcedc0a-9841-4377-aea1-9fa9fdb46fde" description="SolAR2DTransform">
+ <component uuid="edcedc0a-9841-4377-aea1-9fa9fdb46fde" description="SolAR2DTransform">
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
                 <interface uuid="dbf5a8a1-cbcb-4a95-8dfd-4d9d5877e56f" description="I2DTransform"/>
         </component>
         <component uuid="f05dd955-33bd-4d52-8717-93ad298ed3e3" description="SolAR3DTransform">
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
                 <interface uuid="9c1052b2-46c0-467b-8363-36f19b6b445f" description="I3DTransform"/>
+        </component>
+		<component uuid="cbb620c3-a7fc-42d7-bcbf-f59b475b23b0" description="SolARBasicMatchesFilter">
+                <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
+                <interface uuid="e0d6cc82-6af2-493d-901a-2384fca0b16f" description="IMatchesFilter"/>
         </component>
         <component uuid="112f9f03-79c1-4393-b8f3-e02227bebfed" description="SolARHomographyValidation">
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>

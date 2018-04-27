@@ -9,6 +9,10 @@
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
                 <interface uuid="9c1052b2-46c0-467b-8363-36f19b6b445f" description="I3DTransform"/>
         </component>
+		<component uuid="cbb620c3-a7fc-42d7-bcbf-f59b475b23b0" description="SolARBasicMatchesFilter">
+                <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
+                <interface uuid="e0d6cc82-6af2-493d-901a-2384fca0b16f" description="IMatchesFilter"/>
+        </component>
         <component uuid="112f9f03-79c1-4393-b8f3-e02227bebfed" description="SolARHomographyValidation">
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" description="IComponentIntrospect"/>
                 <interface uuid="e95e8f70-dd32-11e7-9296-cec278b6b50a" description="IHomographyValidation"/>

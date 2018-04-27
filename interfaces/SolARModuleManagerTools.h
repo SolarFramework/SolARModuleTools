@@ -22,6 +22,7 @@
 
 #include "api/features/ISBPatternReIndexer.h"
 #include "api/features/IKeypointsReIndexer.h"
+#include "api/features/IMatchesFilter.h"
 
 #include "api/geom/I2DTransform.h"
 #include "api/geom/I3DTransform.h"
@@ -39,6 +40,7 @@ namespace UUID {
 // declaration of components UUIDs
 const string TRANSFORM2D="edcedc0a-9841-4377-aea1-9fa9fdb46fde";
 const string TRANSFORM3D="f05dd955-33bd-4d52-8717-93ad298ed3e3";
+const string BASIC_MATCHES_FILTER="cbb620c3-a7fc-42d7-bcbf-f59b475b23b0";
 const string HOMOGRAPHY_VALIDATION="112f9f03-79c1-4393-b8f3-e02227bebfed";
 const string IMAGE2WORLD_MAPPER="6fed0169-4f01-4545-842a-3e2425bee248";
 const string KEYPOINTS_REINDEXER="c2836cc0-0344-4956-8959-84936fb4bcf2";
@@ -98,6 +100,14 @@ int SolARModuleManagerTools::createComponent(string uuid, SRef<T> &compRef)
         res=m_xpcfComponentManager->createComponent(gen(uuid), gen(api::geom::I3DTransform::UUID), compRef);
         if (res == -1)
              LOG_ERROR("Transform 3D component creation has failed");
+        return res;
+    }
+
+    else if (uuid == UUID::BASIC_MATCHES_FILTER) // Basic matches filter component
+    {
+        res=m_xpcfComponentManager->createComponent(gen(uuid), gen(api::features::IMatchesFilter::UUID), compRef);
+        if (res == -1)
+             LOG_ERROR("Basic Matches Filter component creation has failed");
         return res;
     }
 
