@@ -53,5 +53,13 @@
 # Visual Studio files
 .vs*
 x64*
+*.vcxproj
+*.filters
+*.opendb
+*.db
+*.sln
+Debug/
+Release/
+install_manifest.txt
 
 tests/SolARHomographyEstimation/xpcf_custom\.xml

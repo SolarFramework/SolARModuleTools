@@ -12,6 +12,7 @@ set (SOURCES
 		src/SolARKeypointsReIndexer.cpp
 		src/SolARBasicMatchesFilter.cpp
 		src/SolARModuleTools.cpp
+		src/SolARPoseHelper.cpp
 		src/SolARModuleManagerTools.cpp
 )
 
