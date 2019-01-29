@@ -41,6 +41,9 @@ void  SolARMapFilter::filter(const Transform3Df pose1, const Transform3Df pose2,
         LOG_INFO("mapFilter opencv has an empty vector as input");
     }
 
+       Transform3Df invPose1 = pose1.inverse();
+       Transform3Df invPose2 = pose2.inverse();
+
     output.clear();
 
     for (int i = 0; i < input.size(); i++)
@@ -55,8 +58,8 @@ void  SolARMapFilter::filter(const Transform3Df pose1, const Transform3Df pose2,
         Vector4f point(input[i]->getX(), input[i]->getY(), input[i]->getZ(), 1);
         Vector4f pointInCam1Ref, pointInCam2Ref;
 #endif
-        pointInCam1Ref = pose1*point;
-        pointInCam2Ref = pose2*point;
+        pointInCam1Ref = invPose1 * point ;
+        pointInCam2Ref = invPose2 * point ;
 
         if ((!m_cheiralityCheck) || ((pointInCam1Ref(2) >= 0) && pointInCam2Ref(2) >=0))
         {
@@ -65,6 +68,7 @@ void  SolARMapFilter::filter(const Transform3Df pose1, const Transform3Df pose2,
                 output.push_back(input[i]);
         }
     }
+    LOG_DEBUG("Nb filtered points (){}/{})", output.size(), input.size());
 
 }
 
