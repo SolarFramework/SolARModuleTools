@@ -72,7 +72,7 @@ public:
     /// @return return SinkReturnCode::_SUCCESS if a new pose and image are available, otherwise frameworkReturnCode::_ERROR.
     SinkReturnCode tryGet( Transform3Df& pose) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 private:
     SRef<Image> m_image;

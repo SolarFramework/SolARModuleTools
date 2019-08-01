@@ -32,7 +32,7 @@ public:
     /// @param[in] newPointMatches new detected matches from the reference keyframe and current frame.
     /// @param[in] existingPointMatches new detected matches from the reference keyframe and current frame.
     /// @return FrameworkReturnCode::_SUCCESS if the map updating succeed, else FrameworkReturnCode::_ERROR_
-    virtual FrameworkReturnCode update (SRef<Map> & map,
+    FrameworkReturnCode update (SRef<Map> & map,
                                         SRef<Keyframe> & newKeyframe,
                                         const std::vector<CloudPoint> & newCloud = {},
                                         const std::vector<DescriptorMatch> & newPointsMatches = {},
@@ -40,7 +40,7 @@ public:
 
     std::vector<SRef<Keyframe>> getKeyframes() override;
     SRef<Map> getMap() override;
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 private:
     std::vector<SRef<Keyframe>> m_kframes;

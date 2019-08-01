@@ -38,7 +38,7 @@ public:
                                 std::vector<Point2Df> & matchedRefKeypoints,
                                 std::vector<Point2Df> & matchedImgKeypoints) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
     };
 

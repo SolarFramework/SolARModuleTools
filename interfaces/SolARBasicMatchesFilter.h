@@ -33,7 +33,7 @@ namespace SolAR {
                           const std::vector<Keypoint> & inputKeyPointsA,
                           const std::vector<Keypoint> & inputKeyPointsB) override;
 
-                void unloadComponent () override final;
+                void unloadComponent () final;
 
 
              private:

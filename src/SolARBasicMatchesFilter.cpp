@@ -33,9 +33,7 @@ SolARBasicMatchesFilter::SolARBasicMatchesFilter():ComponentBase(xpcf::toUUID<So
 }
 
 
-SolARBasicMatchesFilter::~SolARBasicMatchesFilter(){
-
-}
+SolARBasicMatchesFilter::~SolARBasicMatchesFilter()= default;
 
 
 bool sortMatchByDistance(const std::pair<int,float> &lhs, const std::pair<int,float> &rhs)
@@ -51,7 +49,7 @@ void SolARBasicMatchesFilter::filter(const std::vector<DescriptorMatch> & inputM
 {
     std::map<int,std::vector<std::pair<int,float>>> matchesMap;
 
-    for(auto match : inputMatches){
+    for(const auto& match : inputMatches){
         matchesMap[match.getIndexInDescriptorA()].push_back(std::make_pair(match.getIndexInDescriptorB(),match.getMatchingScore()));
     }
 
@@ -65,7 +63,7 @@ void SolARBasicMatchesFilter::filter(const std::vector<DescriptorMatch> & inputM
     }
 
     matchesMap.clear();
-    for(auto match : matches){
+    for(const auto& match : matches){
         matchesMap[match.getIndexInDescriptorB()].push_back(std::make_pair(match.getIndexInDescriptorA(),match.getMatchingScore()));
     }
 

@@ -37,7 +37,7 @@ public:
                                 std::vector<Point2Df> & patternPoints,
                                 std::vector<Point2Df> & imagePoints) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 private:
    int m_sbPatternSize;

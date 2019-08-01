@@ -37,7 +37,7 @@ public:
 
     FrameworkReturnCode transform(const std::vector<Point2Df> & inputPoints, const Transform2Df & transformation, std::vector<Point2Df> & outputPoints) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 
  private:

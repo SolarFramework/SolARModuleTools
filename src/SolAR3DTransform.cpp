@@ -31,16 +31,14 @@ SolAR3DTransform::SolAR3DTransform():ComponentBase(xpcf::toUUID<SolAR3DTransform
 }
 
 
-SolAR3DTransform::~SolAR3DTransform(){
-
-}
+SolAR3DTransform::~SolAR3DTransform()= default;
 
 FrameworkReturnCode SolAR3DTransform::transform(const std::vector<Point3Df> & inputPoints, const Transform3Df & transformation, std::vector<Point3Df> & outputPoints)
 {
     Point3Df outputPoint3D;
     Vector4f outputVector4f;
 
-    for (auto inputPoint3D : inputPoints){
+    for (const auto& inputPoint3D : inputPoints){
         Vector4f inputVector4f(inputPoint3D.getX(),inputPoint3D.getY(), inputPoint3D.getZ(), 1);
         outputVector4f=transformation*inputVector4f;
         if (outputVector4f[3]!=0) {

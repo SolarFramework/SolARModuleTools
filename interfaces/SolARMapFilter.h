@@ -30,7 +30,7 @@ namespace TOOLS {
         /// @param[out] output: the filtered point cloud
         void  filter(const Transform3Df & pose1, const Transform3Df & pose2, const std::vector<CloudPoint>& input,  std::vector<CloudPoint>& output) override;
 
-        void unloadComponent () override final;
+        void unloadComponent () final;
 
     protected :
 

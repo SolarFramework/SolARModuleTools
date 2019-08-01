@@ -32,9 +32,7 @@ SolAR2DTransform::SolAR2DTransform():ComponentBase(xpcf::toUUID<SolAR2DTransform
 }
 
 
-SolAR2DTransform::~SolAR2DTransform(){
-
-}
+SolAR2DTransform::~SolAR2DTransform()= default;
 
 FrameworkReturnCode SolAR2DTransform::transform(const std::vector<Point2Df> & inputPoints, const Transform2Df & transformation, std::vector<Point2Df> & outputPoints)
 {

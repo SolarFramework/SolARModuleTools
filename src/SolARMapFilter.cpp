@@ -47,16 +47,16 @@ void  SolARMapFilter::filter(const Transform3Df & pose1, const Transform3Df & po
     invPose1=pose1.inverse();
     invPose2=pose2.inverse();
 
-    for (int i = 0; i < input.size(); i++)
+    for (const CloudPoint &cloudPoint: input)
     {
         // Check for cheirality (if the point is in front of the camera)
 
         // BUG patch To correct, Vector4f should but is not accepted with windows !
 #if (_WIN64) || (_WIN32)
-        Vector3f point(input[i].getX(), input[i].getY(), input[i].getZ());
+        Vector3f point(cloudPoint.getX(), cloudPoint.getY(), cloudPoint.getZ());
         Vector3f pointInCam1Ref, pointInCam2Ref;
 #else
-        Vector4f point(input[i].getX(), input[i].getY(), input[i].getZ(), 1);
+        Vector4f point(cloudPoint.getX(), cloudPoint.getY(), cloudPoint.getZ(), 1);
         Vector4f pointInCam1Ref, pointInCam2Ref;
 #endif
         pointInCam1Ref = invPose1*point;
@@ -65,8 +65,8 @@ void  SolARMapFilter::filter(const Transform3Df & pose1, const Transform3Df & po
         if ((!m_cheiralityCheck) || ((pointInCam1Ref(2) >= 0) && pointInCam2Ref(2) >=0))
         {
             // if the reprojection error is less than the threshold
-            if (input[i].getReprojError() < m_reprojErrorThreshold)
-                output.push_back(input[i]);
+            if (cloudPoint.getReprojError() < m_reprojErrorThreshold)
+                output.push_back(cloudPoint);
         }
     }
 

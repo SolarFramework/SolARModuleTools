@@ -35,7 +35,7 @@ SolARBasicSink::SolARBasicSink():ConfigurableBase(xpcf::toUUID<ISinkPoseImage>()
    m_pose = Transform3Df::Identity();
    m_newPose = false;
    m_newImage = false;
-   m_imageBufferPointer = 0;
+   m_imageBufferPointer = nullptr;
 }
 
 void SolARBasicSink::set( const SRef<Image>& image )

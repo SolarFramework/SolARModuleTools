@@ -39,7 +39,7 @@ namespace TOOLS {
     {
         patternPoints.clear();
         imagePoints.clear();
-        for (std::vector<DescriptorMatch>::const_iterator itr = matches.begin(); itr != matches.end(); ++itr)
+        for (auto itr = matches.begin(); itr != matches.end(); ++itr)
         {
             patternPoints.push_back(Point2Df(0.0f, 0.0f));
             patternPoints.push_back(Point2Df(m_sbPatternSize, 0.0f));

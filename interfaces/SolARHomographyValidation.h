@@ -44,7 +44,7 @@ public:
     /// @param[in] Set of 2d_points of the corners projected in the current view.
     bool isValid(const std::vector<Point2Df> & ref2DSquaredMarkerCorners, const std::vector<Point2Df> & projected2DSquaredMarkerCorners) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 private:
     /// @brief minimum length ratio of the opposite reprojected sides of the squared marker

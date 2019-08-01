@@ -37,9 +37,7 @@ SolARImage2WorldMapper4Marker2D::SolARImage2WorldMapper4Marker2D():ConfigurableB
 }
 
 
-SolARImage2WorldMapper4Marker2D::~SolARImage2WorldMapper4Marker2D(){
-
-}
+SolARImage2WorldMapper4Marker2D::~SolARImage2WorldMapper4Marker2D()= default;
 
 FrameworkReturnCode SolARImage2WorldMapper4Marker2D::map(const std::vector<Point2Df> & digitalPoints, std::vector<Point3Df> & worldPoints)
 {
@@ -56,9 +54,8 @@ FrameworkReturnCode SolARImage2WorldMapper4Marker2D::map(const std::vector<Point
     float half_img_height = (float) m_digitalHeight / 2;
 
 
-    for (int i = 0; i<digitalPoints.size();++i)
+    for (const auto & point_2D : digitalPoints)
     {
-        auto const & point_2D = digitalPoints.at(i);
         point_3D.setX((point_2D.getX()-half_img_width)*width_ratio);
         point_3D.setY((point_2D.getY()-half_img_height)*height_ratio);
         point_3D.setZ(0);

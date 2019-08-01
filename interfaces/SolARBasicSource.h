@@ -54,7 +54,7 @@ public:
     /// @return SourceReturnCode::_SUCCESS if a new pose and image have been updated, otherwise frameworkReturnCode::_ERROR_
     SourceReturnCode getNextImage(SRef<Image> & image) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 private:
     SRef<Image> m_image;

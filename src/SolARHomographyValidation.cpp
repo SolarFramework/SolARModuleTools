@@ -107,11 +107,7 @@ namespace TOOLS {
         dir_3.normalize();
 
         // test the aspect shape of the homography
-        if (!( fabs( dir_0.dot(dir_2) )  > m_maxOppositeDotProduct && fabs( dir_1.dot(dir_3) )  >m_maxOppositeDotProduct)){
-            return false;
-
-        }
-        return true;
+        return fabs( dir_0.dot(dir_2) ) > m_maxOppositeDotProduct && fabs( dir_1.dot(dir_3) ) > m_maxOppositeDotProduct;
     }
 
 }

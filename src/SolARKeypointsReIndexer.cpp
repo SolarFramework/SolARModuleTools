@@ -40,10 +40,10 @@ namespace TOOLS {
         matchedRefKeypoints.clear();
         matchedImgKeypoints.clear();
 
-       for( int i = 0; i < matches.size(); i++ )
+       for(const auto & matche : matches)
        {
-            matchedRefKeypoints.push_back(Point2Df(refKeypoints[ matches[i].getIndexInDescriptorA()].getX(),refKeypoints[ matches[i].getIndexInDescriptorA()].getY()));
-            matchedImgKeypoints.push_back(Point2Df(imgKeypoints[ matches[i].getIndexInDescriptorB()].getX(),imgKeypoints[ matches[i].getIndexInDescriptorB()].getY()));
+            matchedRefKeypoints.push_back(Point2Df(refKeypoints[ matche.getIndexInDescriptorA()].getX(),refKeypoints[ matche.getIndexInDescriptorA()].getY()));
+            matchedImgKeypoints.push_back(Point2Df(imgKeypoints[ matche.getIndexInDescriptorB()].getX(),imgKeypoints[ matche.getIndexInDescriptorB()].getY()));
        }
        return FrameworkReturnCode::_SUCCESS;
     }

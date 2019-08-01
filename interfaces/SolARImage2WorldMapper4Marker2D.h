@@ -37,21 +37,21 @@ public:
 
     FrameworkReturnCode map(const std::vector<Point2Df> & digitalPoints, std::vector<Point3Df> & worldPoints) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
 
 private:
     /// @brief the width of the 2D marker in pixels for a natural image marker, or in cells for a squared binary marker.
-    int m_digitalWidth;
+    int m_digitalWidth{};
 
     /// @brief the height of the 2D marker in pixels for a natural image marker, or in cells for a squared binary marker.
-    int m_digitalHeight;
+    int m_digitalHeight{};
 
     /// @brief the width of the marker in a user-defined world coordinate system (meters, cenimeters, etc.)
-    float m_worldWidth;
+    float m_worldWidth{};
 
     /// @brief the height of the marker in a user-defined world coordinate system (meters, cenimeters, etc.)
-    float m_worldHeight;
+    float m_worldHeight{};
 
 
 };

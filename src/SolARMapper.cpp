@@ -39,9 +39,9 @@ namespace TOOLS {
                                              const std::vector<DescriptorMatch> & newPointsMatches,
                                              const std::vector<DescriptorMatch> & existingPointsMatches)
     {
-        if (m_kframes.size() == 0)
+        if (m_kframes.empty())
         {
-            if (newCloud.size() != 0 || newPointsMatches.size() != 0 || existingPointsMatches.size() != 0)
+            if (!newCloud.empty() || !newPointsMatches.empty() || !existingPointsMatches.empty())
             {
                 LOG_WARNING("For the first update of the Mapper, only the first keyframe is required");
             }
@@ -62,40 +62,40 @@ namespace TOOLS {
         std::map<unsigned int, CloudPoint> keyframeVisibility, newRefKeyframeVisibility, refKeyframeVisibility = referenceKeyframe->getVisibleMapPoints();
         std::map<unsigned int, unsigned int>::iterator visIt;
 
-        for (int i = 0; i < newCloud.size(); i++)
+        for (const auto & i : newCloud)
         {
-            std::map<unsigned int, unsigned int> cloudPointVisibility = newCloud[i].getVisibility();
+            std::map<unsigned int, unsigned int> cloudPointVisibility = i.getVisibility();
             // update the visibility of the current keyframe with the new 3D points
             visIt = cloudPointVisibility.find(newKeyframe->m_idx);
             if (visIt != cloudPointVisibility.end())
             {
-                keyframeVisibility[visIt->second] = newCloud[i];
+                keyframeVisibility[visIt->second] = i;
             }
             // update the visibility of the reference keyframe with the new 3D points
             visIt = cloudPointVisibility.find(referenceKeyframe->m_idx);
             if (visIt != cloudPointVisibility.end())
             {
-                newRefKeyframeVisibility[visIt->second] = newCloud[i];
+                newRefKeyframeVisibility[visIt->second] = i;
             }
         }
 
         if (m_kframes.size() == 1)
         {
-            if (existingPointsMatches.size() != 0)
+            if (!existingPointsMatches.empty())
             {
                 LOG_WARNING("For the second update of the Mapper, not need of existing points");
             }
         }
         else
         {
-            for (int i = 0; i < existingPointsMatches.size(); i++)
+            for (const auto & existingPointsMatche : existingPointsMatches)
             {
                 // update the existing 3D points already in the map visible by the current keyframe and reciprocally
-                std::map<unsigned int, CloudPoint>::iterator refKFVisIt = refKeyframeVisibility.find(existingPointsMatches[i].getIndexInDescriptorA());
+                auto refKFVisIt = refKeyframeVisibility.find(existingPointsMatche.getIndexInDescriptorA());
                 if ( refKFVisIt != refKeyframeVisibility.end() )
                 {
-                    keyframeVisibility[existingPointsMatches[i].getIndexInDescriptorB()] = refKFVisIt->second;
-                    refKFVisIt->second.visibilityAddKeypoint(newKeyframe->m_idx, existingPointsMatches[i].getIndexInDescriptorB());
+                    keyframeVisibility[existingPointsMatche.getIndexInDescriptorB()] = refKFVisIt->second;
+                    refKFVisIt->second.visibilityAddKeypoint(newKeyframe->m_idx, existingPointsMatche.getIndexInDescriptorB());
                 }
             }
         }

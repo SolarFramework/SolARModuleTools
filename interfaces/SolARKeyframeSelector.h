@@ -36,15 +36,15 @@ public:
     ///
     ///@brief ~SolARKeyframeSelector
     ///
-    virtual ~SolARKeyframeSelector() override {}
+    ~SolARKeyframeSelector() override = default;
 
     /// @brief  Select if a frame can be considered as a keyframe
     /// @param[in] frame: the frame tested to know if it could be a Keyframe
     /// @param[in] matches: the matches between the frame and its keyframe of reference.
     /// @return true if the frame can be considered as a new keyframe, false otherwise.
-    virtual bool select(const SRef<Frame> & frame, const std::vector<DescriptorMatch> & matches) override;
+    bool select(const SRef<Frame> & frame, const std::vector<DescriptorMatch> & matches) override;
 
-    void unloadComponent () override final;
+    void unloadComponent () final;
 
  private:
     // Minimum number of matches for a frame to be a keyframe
