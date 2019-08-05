@@ -50,30 +50,32 @@ void SolARBasicMatchesFilter::filter(const std::vector<DescriptorMatch> & inputM
     std::map<int,std::vector<std::pair<int,float>>> matchesMap;
 
     for(const auto& match : inputMatches){
-        matchesMap[match.getIndexInDescriptorA()].push_back(std::make_pair(match.getIndexInDescriptorB(),match.getMatchingScore()));
+        matchesMap[match.getIndexInDescriptorA()].emplace_back(match.getIndexInDescriptorB(),match.getMatchingScore());
     }
 
     std::vector<DescriptorMatch> matches;
+    matches.reserve(matchesMap.size());
     for (auto & kv : matchesMap) {//std::map<int,std::vector<std::pair<int,float>>>::iterator itr=matchesMap.begin();itr!=matchesMap.end();++itr){
         std::vector<std::pair<int,float>> &  vect = kv.second;
         if(vect.size()>1){
             std::sort(vect.begin(),vect.end(),sortMatchByDistance);
         }
-        matches.push_back(DescriptorMatch(kv.first, vect.begin()->first,vect.begin()->second));
+        matches.emplace_back(kv.first, vect.begin()->first,vect.begin()->second);
     }
 
     matchesMap.clear();
     for(const auto& match : matches){
-        matchesMap[match.getIndexInDescriptorB()].push_back(std::make_pair(match.getIndexInDescriptorA(),match.getMatchingScore()));
+        matchesMap[match.getIndexInDescriptorB()].emplace_back(match.getIndexInDescriptorA(),match.getMatchingScore());
     }
 
     matches.clear();
+    matches.reserve(matchesMap.size());
    for (auto & kv : matchesMap) {//for (std::map<int,std::vector<std::pair<int,float>>>::iterator itr=matchesMap.begin();itr!=matchesMap.end();++itr){
         std::vector<std::pair<int,float>> & vect = kv.second;
         if(vect.size()>1){
             std::sort(vect.begin(),vect.end(),sortMatchByDistance);
         }
-        matches.push_back(DescriptorMatch(vect.begin()->first,kv.first,vect.begin()->second));
+        matches.emplace_back(vect.begin()->first,kv.first,vect.begin()->second);
     }
 
     outputMatches = matches;

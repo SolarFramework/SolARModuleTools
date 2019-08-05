@@ -36,17 +36,19 @@ namespace TOOLS {
                                                        const std::vector<DescriptorMatch> & matches,
                                                        std::vector<Point2Df>& matchedRefKeypoints,
                                                        std::vector<Point2Df>& matchedImgKeypoints)
-    {
-        matchedRefKeypoints.clear();
-        matchedImgKeypoints.clear();
+  {
+      matchedRefKeypoints.clear();
+      matchedImgKeypoints.clear();
 
-       for(const auto & matche : matches)
-       {
-            matchedRefKeypoints.push_back(Point2Df(refKeypoints[ matche.getIndexInDescriptorA()].getX(),refKeypoints[ matche.getIndexInDescriptorA()].getY()));
-            matchedImgKeypoints.push_back(Point2Df(imgKeypoints[ matche.getIndexInDescriptorB()].getX(),imgKeypoints[ matche.getIndexInDescriptorB()].getY()));
-       }
-       return FrameworkReturnCode::_SUCCESS;
-    }
+      matchedRefKeypoints.reserve(matches.size());
+      matchedImgKeypoints.reserve(matches.size());
+      for(const auto & matche : matches)
+      {
+          matchedRefKeypoints.emplace_back(refKeypoints[ matche.getIndexInDescriptorA()].x(),refKeypoints[ matche.getIndexInDescriptorA()].y());
+          matchedImgKeypoints.emplace_back(imgKeypoints[ matche.getIndexInDescriptorB()].x(),imgKeypoints[ matche.getIndexInDescriptorB()].y());
+      }
+      return FrameworkReturnCode::_SUCCESS;
+  }
 
 }
 }

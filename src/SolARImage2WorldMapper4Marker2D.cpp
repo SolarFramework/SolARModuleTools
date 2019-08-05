@@ -53,13 +53,10 @@ FrameworkReturnCode SolARImage2WorldMapper4Marker2D::map(const std::vector<Point
     float half_img_width = (float) m_digitalWidth / 2;
     float half_img_height = (float) m_digitalHeight / 2;
 
-
+    worldPoints.reserve(digitalPoints.size());
     for (const auto & point_2D : digitalPoints)
     {
-        point_3D.setX((point_2D.getX()-half_img_width)*width_ratio);
-        point_3D.setY((point_2D.getY()-half_img_height)*height_ratio);
-        point_3D.setZ(0);
-        worldPoints.push_back(Point3Df(point_3D));
+        worldPoints.emplace_back((point_2D.x()-half_img_width)*width_ratio, (point_2D.y()-half_img_height)*height_ratio, 0);
     }
     return FrameworkReturnCode::_SUCCESS;
 }

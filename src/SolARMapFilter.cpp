@@ -53,10 +53,10 @@ void  SolARMapFilter::filter(const Transform3Df & pose1, const Transform3Df & po
 
         // BUG patch To correct, Vector4f should but is not accepted with windows !
 #if (_WIN64) || (_WIN32)
-        Vector3f point(cloudPoint.getX(), cloudPoint.getY(), cloudPoint.getZ());
+        Vector3f point(cloudPoint.x(), cloudPoint.y(), cloudPoint.z());
         Vector3f pointInCam1Ref, pointInCam2Ref;
 #else
-        Vector4f point(cloudPoint.getX(), cloudPoint.getY(), cloudPoint.getZ(), 1);
+        Vector4f point(cloudPoint.x(), cloudPoint.y(), cloudPoint.z(), 1);
         Vector4f pointInCam1Ref, pointInCam2Ref;
 #endif
         pointInCam1Ref = invPose1*point;
@@ -66,7 +66,7 @@ void  SolARMapFilter::filter(const Transform3Df & pose1, const Transform3Df & po
         {
             // if the reprojection error is less than the threshold
             if (cloudPoint.getReprojError() < m_reprojErrorThreshold)
-                output.push_back(cloudPoint);
+                output.emplace_back(cloudPoint);
         }
     }
 

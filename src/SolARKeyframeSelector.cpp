@@ -54,7 +54,7 @@ bool SolARKeyframeSelector::select(const SRef<Frame> & frame, const std::vector<
         Keypoint keypointRef = keypointsRef[matche.getIndexInDescriptorA()];
         Keypoint keypointCurrent = keypointsCurrent[matche.getIndexInDescriptorB()];
 
-        totalMatchesDist += (keypointRef-keypointCurrent).norm()/imageWidth;
+        totalMatchesDist += (keypointRef.getPosition()-keypointCurrent.getPosition()).norm()/imageWidth;
     }
     return (totalMatchesDist/matches.size()>m_minMeanDistanceIsKeyframe);
 }

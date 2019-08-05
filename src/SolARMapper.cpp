@@ -45,7 +45,7 @@ namespace TOOLS {
             {
                 LOG_WARNING("For the first update of the Mapper, only the first keyframe is required");
             }
-            m_kframes.push_back(newKeyframe);
+            m_kframes.emplace_back(newKeyframe);
             map = m_map;
             return FrameworkReturnCode::_SUCCESS;
         }
@@ -102,7 +102,7 @@ namespace TOOLS {
         m_gmatches[std::make_pair(referenceKeyframe->m_idx, newKeyframe->m_idx)] = newPointsMatches;
         newKeyframe->addVisibleMapPoints(keyframeVisibility);
         referenceKeyframe->addVisibleMapPoints(newRefKeyframeVisibility);
-        m_kframes.push_back(newKeyframe);
+        m_kframes.emplace_back(newKeyframe);
         // Add the 3D points that have just been triangulated
         m_map->addCloudPoints(newCloud);
         map = m_map;

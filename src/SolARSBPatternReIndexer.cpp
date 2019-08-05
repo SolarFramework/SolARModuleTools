@@ -39,18 +39,20 @@ namespace TOOLS {
     {
         patternPoints.clear();
         imagePoints.clear();
+        patternPoints.reserve(matches.size() * 4);
+        imagePoints.reserve(matches.size() * 4);
         for (auto itr = matches.begin(); itr != matches.end(); ++itr)
         {
-            patternPoints.push_back(Point2Df(0.0f, 0.0f));
-            patternPoints.push_back(Point2Df(m_sbPatternSize, 0.0f));
-            patternPoints.push_back(Point2Df(m_sbPatternSize, m_sbPatternSize));
-            patternPoints.push_back(Point2Df(0.0f,m_sbPatternSize));
+            patternPoints.emplace_back(0.0f, 0.0f);
+            patternPoints.emplace_back(m_sbPatternSize, 0.0f);
+            patternPoints.emplace_back(m_sbPatternSize, m_sbPatternSize);
+            patternPoints.emplace_back(0.0f,m_sbPatternSize);
 
             Contour2Df recognizedContour = candidateContours[itr->getIndexInDescriptorB()];
-            imagePoints.push_back(Point2Df(recognizedContour[0].getX(), recognizedContour[0].getY()));
-            imagePoints.push_back(Point2Df(recognizedContour[1].getX(), recognizedContour[1].getY()));
-            imagePoints.push_back(Point2Df(recognizedContour[2].getX(), recognizedContour[2].getY()));
-            imagePoints.push_back(Point2Df(recognizedContour[3].getX(), recognizedContour[3].getY()));
+            imagePoints.emplace_back(recognizedContour[0].x(), recognizedContour[0].y());
+            imagePoints.emplace_back(recognizedContour[1].x(), recognizedContour[1].y());
+            imagePoints.emplace_back(recognizedContour[2].x(), recognizedContour[2].y());
+            imagePoints.emplace_back(recognizedContour[3].x(), recognizedContour[3].y());
         }
         return FrameworkReturnCode::_SUCCESS;
     }

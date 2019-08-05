@@ -39,17 +39,16 @@ FrameworkReturnCode SolAR2DTransform::transform(const std::vector<Point2Df> & in
     Point2Df outputPoint2D;
     Vector3f outputVector3f;
 
+    outputPoints.reserve(inputPoints.size());
     for (auto inputPoint2D : inputPoints){
-        Vector3f inputVector3f(inputPoint2D.getX(),inputPoint2D.getY(),1);
+        Vector3f inputVector3f(inputPoint2D.x(),inputPoint2D.y(),1);
         outputVector3f=transformation*inputVector3f;
         if (outputVector3f[2]!=0) {
-            outputPoint2D.setX(outputVector3f[0]/outputVector3f[2]);
-            outputPoint2D.setY(outputVector3f[1]/outputVector3f[2]);
+            outputPoint2D = {outputVector3f[0]/outputVector3f[2], outputVector3f[1]/outputVector3f[2]};
         } else {
-            outputPoint2D.setX(0);
-            outputPoint2D.setY(0);
+            outputPoint2D = {0, 0};
         }
-        outputPoints.push_back(outputPoint2D);
+        outputPoints.emplace_back(outputPoint2D);
     }
     return FrameworkReturnCode::_SUCCESS;
 }

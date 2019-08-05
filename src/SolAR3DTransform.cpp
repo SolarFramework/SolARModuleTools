@@ -38,19 +38,16 @@ FrameworkReturnCode SolAR3DTransform::transform(const std::vector<Point3Df> & in
     Point3Df outputPoint3D;
     Vector4f outputVector4f;
 
+    outputPoints.reserve(inputPoints.size());
     for (const auto& inputPoint3D : inputPoints){
-        Vector4f inputVector4f(inputPoint3D.getX(),inputPoint3D.getY(), inputPoint3D.getZ(), 1);
+        Vector4f inputVector4f(inputPoint3D.x(),inputPoint3D.y(), inputPoint3D.z(), 1);
         outputVector4f=transformation*inputVector4f;
         if (outputVector4f[3]!=0) {
-            outputPoint3D.setX(outputVector4f[0]/outputVector4f[3]);
-            outputPoint3D.setY(outputVector4f[1]/outputVector4f[3]);
-            outputPoint3D.setZ(outputVector4f[2]/outputVector4f[3]);
+            outputPoint3D = {outputVector4f[0]/outputVector4f[3], outputVector4f[1]/outputVector4f[3], outputVector4f[2]/outputVector4f[3]};
         } else {
-            outputPoint3D.setX(0);
-            outputPoint3D.setY(0);
-            outputPoint3D.setZ(0);
+            outputPoint3D = {0, 0, 0};
         }
-        outputPoints.push_back(outputPoint3D);
+        outputPoints.emplace_back(outputPoint3D);
     }
 
     return FrameworkReturnCode::_SUCCESS;
