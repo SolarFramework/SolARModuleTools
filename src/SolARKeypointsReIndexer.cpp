@@ -42,10 +42,10 @@ namespace TOOLS {
 
       matchedRefKeypoints.reserve(matches.size());
       matchedImgKeypoints.reserve(matches.size());
-      for(const auto & matche : matches)
+      for(const auto & match : matches)
       {
-          matchedRefKeypoints.emplace_back(refKeypoints[ matche.getIndexInDescriptorA()].x(),refKeypoints[ matche.getIndexInDescriptorA()].y());
-          matchedImgKeypoints.emplace_back(imgKeypoints[ matche.getIndexInDescriptorB()].x(),imgKeypoints[ matche.getIndexInDescriptorB()].y());
+          matchedRefKeypoints.emplace_back(refKeypoints[match.getIndexInDescriptorA()].x(),refKeypoints[match.getIndexInDescriptorA()].y());
+          matchedImgKeypoints.emplace_back(imgKeypoints[match.getIndexInDescriptorB()].x(),imgKeypoints[match.getIndexInDescriptorB()].y());
       }
       return FrameworkReturnCode::_SUCCESS;
   }
