@@ -62,7 +62,7 @@ public:
     template <class T>
     SRef<T> createComponent(string uuid);
 
-    inline bool isLoaded() const {return loaded;}
+    bool isLoaded() const {return loaded;}
 
 protected:
     SRef<xpcf::IComponentManager> m_xpcfComponentManager;
