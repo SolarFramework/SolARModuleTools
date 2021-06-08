@@ -237,14 +237,15 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
         if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
 			continue;
 		// get keypoints don't have associated cloud points
-		std::vector<int> newKf_indexKeypoints;
+		std::vector<uint32_t> newKf_indexKeypoints;
 		for (int j = 0; j < checkMatches.size(); ++j)
 			if (!checkMatches[j])
 				newKf_indexKeypoints.push_back(j);
 
 		// Matching based on BoW
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
-		m_keyframeRetriever->match(newKf_indexKeypoints, newKf_des, tmpKf, tmpMatches);
+		//m_keyframeRetriever->match(newKf_indexKeypoints, newKf_des, tmpKf, tmpMatches);
+		m_matcher->match(keyframe, tmpKf, newKf_pose, tmpKf_pose, m_camMatrix, tmpMatches, newKf_indexKeypoints);
 		// matches filter based homography matrix
 		m_matchesFilter->filter(tmpMatches, tmpMatches, newKf_kp, tmpKf->getKeypoints());
 		// find info to triangulate						
