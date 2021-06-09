@@ -24,7 +24,6 @@
 #include "api/storage/IPointCloudManager.h"
 #include "api/solver/map/IBundler.h"
 #include "api/reloc/IKeyframeRetriever.h"
-#include "api/features/IMatchesFilter.h"
 #include "api/solver/map/ITriangulator.h"
 #include "api/solver/map/IMapFilter.h"
 #include "api/geom/IProject.h"
@@ -50,7 +49,6 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::solver::map::IKeyframeSelector}
 * @SolARComponentInjectable{SolAR::api::solver::map::IBundler}
 * @SolARComponentInjectable{SolAR::api::reloc::IKeyframeRetriever}
-* @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
 * @SolARComponentInjectable{SolAR::solver::map::IMapFilter}
 * @SolARComponentInjectable{SolAR::api::geom::IProject}
@@ -121,7 +119,6 @@ private:
     SRef<SolAR::api::reloc::IKeyframeRetriever>									m_keyframeRetriever;
     SRef<SolAR::api::storage::IMapManager>                                      m_mapManager;
     SRef<SolAR::api::storage::IPointCloudManager>								m_pointCloudManager;
-    SRef<SolAR::api::features::IMatchesFilter>									m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>								m_triangulator;
     SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilter;
     SRef<SolAR::api::geom::IProject>											m_projector;

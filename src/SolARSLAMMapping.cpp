@@ -40,7 +40,6 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::solver::map::IKeyframeSelector>(m_keyframeSelector);
 	declareInjectable<api::solver::map::IBundler>(m_bundler);
 	declareInjectable<api::reloc::IKeyframeRetriever>(m_keyframeRetriever);
-	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
 	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
 	declareInjectable<api::geom::IProject>(m_projector);
@@ -146,8 +145,7 @@ bool SolARSLAMMapping::checkNeedNewKeyframeInLocalMap(const SRef<Frame>& frame)
 				return true;
 			// Check find enough matches to best ret keyframe
 			std::vector<DescriptorMatch> matches;
-			m_matcher->match(bestRetKeyframe->getDescriptors(), frame->getDescriptors(), matches);
-			m_matchesFilter->filter(matches, matches, bestRetKeyframe->getKeypoints(), frame->getKeypoints());			
+			m_matcher->match(bestRetKeyframe, frame, bestRetKeyframe->getPose(), frame->getPose(), m_camMatrix, matches);		
 			std::vector<Point2Df> pts2d;
 			std::vector<Point3Df> pts3d;
 			std::vector < std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
@@ -246,8 +244,6 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
 		//m_keyframeRetriever->match(newKf_indexKeypoints, newKf_des, tmpKf, tmpMatches);
 		m_matcher->match(keyframe, tmpKf, newKf_pose, tmpKf_pose, m_camMatrix, tmpMatches, newKf_indexKeypoints);
-		// matches filter based homography matrix
-		m_matchesFilter->filter(tmpMatches, tmpMatches, newKf_kp, tmpKf->getKeypoints());
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {
 			unsigned int idx_newKf = tmpMatches[j].getIndexInDescriptorA();
