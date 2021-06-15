@@ -118,7 +118,7 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef
 			if (angleCamDistance(m_keyframe1->getPose(), frame2->getPose()) > m_angleThres)
 				return FrameworkReturnCode::_ERROR_;
 			// Triangulate
-			m_triangulator->triangulate(m_keyframe1->getKeypoints(), frame2->getKeypoints(), m_keyframe1->getDescriptors(), frame2->getDescriptors(), matches,
+			m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame2->getUndistortedKeypoints(), m_keyframe1->getDescriptors(), frame2->getDescriptors(), matches,
 				std::make_pair(0, 1), m_keyframe1->getPose(), frame2->getPose(), cloud);
 			// Filter cloud points
 			m_mapFilter->filter(m_keyframe1->getPose(), frame2->getPose(), cloud, filteredCloud);

@@ -198,11 +198,11 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 {
 	const std::map<unsigned int, unsigned int> &newKf_mapVisibility = keyframe->getVisibility();
 	const SRef<DescriptorBuffer> &newKf_des = keyframe->getDescriptors();
-	const std::vector<Keypoint> & newKf_kp = keyframe->getKeypoints();
+	const std::vector<Keypoint> & newKf_kpUn = keyframe->getUndistortedKeypoints();
 	const Transform3Df& newKf_pose = keyframe->getPose();
 
 	// Vector indices keypoints have no visibility to map point
-	std::vector<bool> checkMatches(newKf_kp.size(), false);
+	std::vector<bool> checkMatches(newKf_kpUn.size(), false);
 	for (const auto& it: newKf_mapVisibility)
 		checkMatches[it.first] = true;
 
@@ -231,19 +231,17 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 			std::sort(depths.begin(), depths.end());
 			tmpKfMedDepth = depths[depths.size() / 2];
 		}
-		// check base line
-        if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
-			continue;
+		
 		// get keypoints don't have associated cloud points
 		std::vector<uint32_t> newKf_indexKeypoints;
 		for (int j = 0; j < checkMatches.size(); ++j)
 			if (!checkMatches[j])
 				newKf_indexKeypoints.push_back(j);
 
-		// Matching based on BoW
+		// Feature matching based on epipolar constraint
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
-		//m_keyframeRetriever->match(newKf_indexKeypoints, newKf_des, tmpKf, tmpMatches);
 		m_matcher->match(keyframe, tmpKf, newKf_pose, tmpKf_pose, m_camMatrix, tmpMatches, newKf_indexKeypoints);
+
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {
 			unsigned int idx_newKf = tmpMatches[j].getIndexInDescriptorA();
@@ -252,15 +250,22 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 				goodMatches.push_back(tmpMatches[j]);
 			}
 		}
+		if (goodMatches.size() == 0)
+			continue;
 		
-		// triangulation
-		std::vector<SRef<CloudPoint>> tmpCloudPoint, tmpFilteredCloudPoint;
-		std::vector<int> indexFiltered;
-		if (goodMatches.size() > 0)
-			m_triangulator->triangulate(newKf_kp, tmpKf->getKeypoints(), newKf_des, tmpKf->getDescriptors(), goodMatches,
-				std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), newKf_pose, tmpKf_pose, tmpCloudPoint);
+		// triangulation		
+		// check baseline: if baseline is very short, 3D points are defined by using only depth information of keypoints 
+		std::vector<SRef<CloudPoint>> tmpCloudPoint;
+		if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
+			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, true);
+		else
+			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, false);
+		if (tmpCloudPoint.size() == 0)
+			continue;
 
 		// filter cloud points
+		std::vector<SRef<CloudPoint>> tmpFilteredCloudPoint;
+		std::vector<int> indexFiltered;
 		if (tmpCloudPoint.size() > 0)
 			m_mapFilter->filter(newKf_pose, tmpKf_pose, tmpCloudPoint, tmpFilteredCloudPoint, indexFiltered);
 		for (int i = 0; i < indexFiltered.size(); ++i) {
