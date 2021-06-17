@@ -54,6 +54,7 @@ class SolARFiducialMarkerPoseEstimator;
 class SolARSLAMBootstrapper;
 class SolARSLAMTracking;
 class SolARSLAMMapping;
+class SolARStereoDepthEstimation;
 
 }
 }
@@ -189,6 +190,11 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARSLAMMapping,
 							"c276bcb1-2ac8-42f2-806d-d4fe0ce7d4be",
 							"SolARSLAMMapping",
 							"SLAM mapping.")
+
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoDepthEstimation,
+							"153ffeaf-7583-44a7-bb7a-3474ba7d99cb",
+							"SolARStereoDepthEstimation",
+							"Depth estimation based on disparity of matched features.")
 							
 
 #endif // SOLARMODULETOOLS_TRAITS_H
