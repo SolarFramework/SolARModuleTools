@@ -33,7 +33,8 @@ SolARSLAMBootstrapper::SolARSLAMBootstrapper() :ConfigurableBase(xpcf::toUUID<So
 {
 	addInterface<api::slam::IBootstrapper>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
-	declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector);
+    declareInjectable<api::image::IImageFilter>(m_imageFilter, true);
+    declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector);
 	declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
@@ -70,13 +71,13 @@ inline float angleCamDistance(const Transform3Df & pose1, const Transform3Df & p
 
 FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef<Image> &view, const Transform3Df &pose)
 {
-	Transform3Df						poseFrame;
+    SRef<Image>                         filteredImage;
+    Transform3Df						poseFrame;
 	std::vector<Keypoint>				keypoints, undistortedKeypoints;
 	SRef<DescriptorBuffer>				descriptors;
 	std::vector<DescriptorMatch>		matches;
 	SRef<Frame>							frame2;	
 	std::vector<SRef<CloudPoint>>		cloud, filteredCloud;	
-	view = image->copy();
 	if (m_hasPose) {
 		if (pose.isApprox(Transform3Df::Identity()))
 			return FrameworkReturnCode::_ERROR_;
@@ -86,25 +87,35 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef
 	else
 		poseFrame = Transform3Df::Identity();			
 
-	// keypoint detection
-	m_keypointsDetector->detect(image, keypoints);
+    if (m_imageFilter)
+    {
+        // Pre-filtering image
+        m_imageFilter->filter(image, filteredImage);
+    }
+    else {
+       filteredImage = image;
+    }
+    view = filteredImage->copy();
+
+    // keypoint detection
+    m_keypointsDetector->detect(filteredImage, keypoints);
 	// undistort keypoints
 	m_undistortPoints->undistort(keypoints, undistortedKeypoints);
 	// feature extraction
-	m_descriptorExtractor->extract(image, keypoints, descriptors);
+    m_descriptorExtractor->extract(filteredImage, keypoints, descriptors);
 	if (!m_initKeyframe1) {
 		// init first keyframe
 		m_initKeyframe1 = true;		
-		m_keyframe1 = xpcf::utils::make_shared<Keyframe>(keypoints, undistortedKeypoints, descriptors, image, poseFrame);
+        m_keyframe1 = xpcf::utils::make_shared<Keyframe>(keypoints, undistortedKeypoints, descriptors, filteredImage, poseFrame);
 	}
 	else {
-		frame2 = xpcf::utils::make_shared<Frame>(keypoints, undistortedKeypoints, descriptors, image, m_keyframe1, poseFrame);		
+        frame2 = xpcf::utils::make_shared<Frame>(keypoints, undistortedKeypoints, descriptors, filteredImage, m_keyframe1, poseFrame);
 		// matching
 		m_matcher->match(m_keyframe1->getDescriptors(), descriptors, matches);
 		//m_matcher->matchInRegion(m_keyframe1, frame2, matches, image->getWidth() * (m_ratioDistanceIsKeyframe + 0.01));
 		m_matchesFilter->filter(matches, matches, m_keyframe1->getKeypoints(), frame2->getKeypoints());
 		if (matches.size() > 0) {
-			m_matchesOverlay->draw(image, view, m_keyframe1->getKeypoints(), frame2->getKeypoints(), matches);
+            m_matchesOverlay->draw(filteredImage, view, m_keyframe1->getKeypoints(), frame2->getKeypoints(), matches);
 		}
 		if (matches.size() < m_nbMinInitPointCloud) {
 			m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame2);
