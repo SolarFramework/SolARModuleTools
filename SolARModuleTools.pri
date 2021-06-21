@@ -26,7 +26,9 @@ interfaces/SolARSLAMTracking.h \
 interfaces/SolARSLAMMapping.h \
 interfaces/SolAROverlapDetector.h \
 interfaces/SolARMapUpdate.h \
-interfaces/SolARStereoDepthEstimation.h
+interfaces/SolARStereoDepthEstimation.h \
+interfaces/SolARStereoFeatureExtractionAndDepthEstimation.h \
+interfaces/SolARStereoMappingBootstrapper.h
 
 
 SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
@@ -56,4 +58,6 @@ SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
     src/SolARSLAMMapping.cpp \
     src/SolAROverlapDetector.cpp \
     src/SolARMapUpdate.cpp \
-	src/SolARStereoDepthEstimation.cpp
+    src/SolARStereoDepthEstimation.cpp \
+    src/SolARStereoFeatureExtractionAndDepthEstimation.cpp \
+    src/SolARStereoMappingBootstrapper.cpp
