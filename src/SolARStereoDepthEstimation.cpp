@@ -55,7 +55,7 @@ void SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keyp
 		if (type == StereoType::Vertical)
 			disparity = kp2.getY() - kp1.getY();
 		else
-			disparity = kp1.getX() - kp2.getY();
+			disparity = kp1.getX() - kp2.getX();
 		if ((disparity > dMin) && (disparity < dMax)) {
 			kp1.setDepth(fb / disparity);
 			kp2.setDepth(fb / disparity);

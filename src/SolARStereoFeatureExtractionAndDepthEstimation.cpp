@@ -81,12 +81,19 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
     LOG_DEBUG("Number of matches: {}", matches.size());
 
     // depth estimation
-    m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[0], undistortedRectifiedKeypoints[1], matches,
-        m_focal, m_stereoRectificator[0]->getBaseline(), m_stereoRectificator[0]->getType());
-    m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[0], undistortedKeypoints[0],
-        m_stereoRectificator[0]->getRectificationParamters(0));
-    m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[1], undistortedKeypoints[1],
-        m_stereoRectificator[0]->getRectificationParamters(1));
+	if (m_stereoRectificator[0]->getRectificationParamters(0).rotation.isIdentity() &&
+		m_stereoRectificator[0]->getRectificationParamters(1).rotation.isIdentity()) {
+		m_stereoDepthEstimator->estimate(undistortedKeypoints[0], undistortedKeypoints[1], matches,
+			m_focal, m_stereoRectificator[0]->getBaseline(), m_stereoRectificator[0]->getType());
+	}
+	else {
+		m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[0], undistortedRectifiedKeypoints[1], matches,
+			m_focal, m_stereoRectificator[0]->getBaseline(), m_stereoRectificator[0]->getType());
+		m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[0], undistortedKeypoints[0],
+			m_stereoRectificator[0]->getRectificationParamters(0));
+		m_stereoDepthEstimator->estimate(undistortedRectifiedKeypoints[1], undistortedKeypoints[1],
+			m_stereoRectificator[0]->getRectificationParamters(1));
+	}
 
     // make frames
     frame1 = xpcf::utils::make_shared<Frame>(keypoints[0], undistortedKeypoints[0], descriptors[0], image1);
@@ -100,7 +107,11 @@ void SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify(int index
     m_keypointsDetector[indexCamera]->detect(image, keypoints);
     m_undistortPoints[indexCamera]->undistort(keypoints, undistortedKeypoints);
     m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors);
-    m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, undistortedRectifiedKeypoints, indexCamera);
+	// No need rectify if rectification rotation parameter is identity
+	if (!m_stereoRectificator[indexCamera]->getRectificationParamters(indexCamera).rotation.isIdentity())
+		m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, undistortedRectifiedKeypoints, indexCamera);
+	else
+		undistortedRectifiedKeypoints = undistortedKeypoints;
 }
 
 }
