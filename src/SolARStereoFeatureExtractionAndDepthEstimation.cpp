@@ -73,7 +73,8 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
 		std::ref(undistortedRectifiedKeypoints[1]), std::ref(descriptors[1]));
     thread1.join();
     thread2.join();
-
+	if ((keypoints[0].size() == 0) || (keypoints[1].size() == 0))
+		return FrameworkReturnCode::_ERROR_;
     // stereo feature matching
     std::vector<DescriptorMatch> matches;
     m_stereoMatcher->match(descriptors[0], descriptors[1], undistortedRectifiedKeypoints[0],
@@ -105,6 +106,8 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
 void SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify(int indexCamera, SRef<datastructure::Image> image, std::vector<datastructure::Keypoint>& keypoints, std::vector<datastructure::Keypoint>& undistortedKeypoints, std::vector<datastructure::Keypoint>& undistortedRectifiedKeypoints, SRef<datastructure::DescriptorBuffer>& descriptors)
 {
     m_keypointsDetector[indexCamera]->detect(image, keypoints);
+	if (keypoints.size() == 0)
+		return;
     m_undistortPoints[indexCamera]->undistort(keypoints, undistortedKeypoints);
     m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors);
 	// No need rectify if rectification rotation parameter is identity
