@@ -43,7 +43,7 @@ namespace TOOLS {
 * <TT>UUID: cddd23c4-da4e-4c5c-b3f9-7d095d097c97</TT>
 *
 * @SolARComponentInjectablesBegin
-* @SolARComponentInjectable{SolAR::api::image::IImageFilter}
+* @SolARComponentInjectable{SolAR::api::image::IImageFilter, optional}
 * @SolARComponentInjectable{SolAR::api::image::IImageConvertor}
 * @SolARComponentInjectable{SolAR::api::features::IContoursExtractor}
 * @SolARComponentInjectable{SolAR::api::features::IContoursFilter}
