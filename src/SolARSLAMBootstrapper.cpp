@@ -34,8 +34,9 @@ SolARSLAMBootstrapper::SolARSLAMBootstrapper() :ConfigurableBase(xpcf::toUUID<So
 	addInterface<api::slam::IBootstrapper>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
     declareInjectable<api::image::IImageFilter>(m_imageFilter, true);
-    declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector);
-	declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor);
+    declareInjectable<api::features::IDescriptorsExtractorFromImage>(m_descriptorExtractorFromImage, true);
+    declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector, true);
+    declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor, true);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
@@ -97,12 +98,20 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef
     }
     view = filteredImage->copy();
 
-    // keypoint detection
-    m_keypointsDetector->detect(filteredImage, keypoints);
-	// undistort keypoints
-	m_undistortPoints->undistort(keypoints, undistortedKeypoints);
-	// feature extraction
-    m_descriptorExtractor->extract(filteredImage, keypoints, descriptors);
+    // Extract features directly from the image if the IDescriptorsExtractorFromImage is defined in the configuration file
+    if (m_descriptorExtractorFromImage)
+    {
+        m_descriptorExtractorFromImage->extract(filteredImage, keypoints, descriptors);
+    }
+    else
+    {
+        // keypoint detection
+        m_keypointsDetector->detect(filteredImage, keypoints);
+        // feature extraction
+        m_descriptorExtractor->extract(filteredImage, keypoints, descriptors);
+    }
+    // undistort keypoints
+    m_undistortPoints->undistort(keypoints, undistortedKeypoints);
 	if (!m_initKeyframe1) {
 		// init first keyframe
 		m_initKeyframe1 = true;		

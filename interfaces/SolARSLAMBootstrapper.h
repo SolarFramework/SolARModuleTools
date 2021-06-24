@@ -22,6 +22,7 @@
 #include "api/image/IImageFilter.h"
 #include "api/features/IKeypointDetector.h"
 #include "api/features/IDescriptorsExtractor.h"
+#include "api/features/IDescriptorsExtractorFromImage.h"
 #include "api/features/IDescriptorMatcher.h"
 #include "api/features/IMatchesFilter.h"
 #include "api/solver/map/ITriangulator.h"
@@ -43,10 +44,11 @@ namespace TOOLS {
 * <TT>UUID: 8f43eed0-1a2e-4c47-83f0-8dd5b259cdb0</TT>
 *
 * @SolARComponentInjectablesBegin
-* @SolARComponentInjectable{SolAR::api::storage::IMapManager}
-* @SolARComponentInjectable{SolAR::api::image::IImageFilter}
-* @SolARComponentInjectable{SolAR::api::features::IKeypointDetector}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor}
+* @SolARComponentInjectable{ SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{ SolAR::api::image::IImageFilter, optional}
+* @SolARComponentInjectable{SolAR::api::features::IKeypointDetector, optional if an IDescriptorsExtractorFromImage is defined}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor, optional if an IDescriptorsExtractorFromImage is defined}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractorFromImage, optionnal if an IKeypointDetector and an IDescriptorsExtractor are defined}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
@@ -114,6 +116,7 @@ private:
     SRef<SolAR::api::image::IImageFilter>                       m_imageFilter;
     SRef<SolAR::api::features::IKeypointDetector>				m_keypointsDetector;
     SRef<SolAR::api::features::IDescriptorsExtractor>			m_descriptorExtractor;
+    SRef<SolAR::api::features::IDescriptorsExtractorFromImage>	m_descriptorExtractorFromImage;
     SRef<SolAR::api::features::IDescriptorMatcher>				m_matcher;
     SRef<SolAR::api::features::IMatchesFilter>					m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>				m_triangulator;
