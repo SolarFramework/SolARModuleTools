@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <xpcf-registry>
-    <module uuid="28b89d39-41bd-451d-b19e-d25a3d7c5797" name="SolARModuleTools"  description="SolARModuleTools"  path="$XPCF_MODULE_ROOT/SolARBuild/SolARModuleTools/0.9.3/lib/x86_64/shared">
+    <module uuid="28b89d39-41bd-451d-b19e-d25a3d7c5797" name="SolARModuleTools"  description="SolARModuleTools"  path="$XPCF_MODULE_ROOT/SolARBuild/SolARModuleTools/0.10.0/lib/x86_64/shared">
         <component uuid="edcedc0a-9841-4377-aea1-9fa9fdb46fde" name="SolAR2DTransform" description="SolAR2DTransform">
                 <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
                 <interface uuid="dbf5a8a1-cbcb-4a95-8dfd-4d9d5877e56f" name="I2DTransform" description="I2DTransform"/>
