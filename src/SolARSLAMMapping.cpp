@@ -37,7 +37,6 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::storage::IPointCloudManager>(m_pointCloudManager);
 	declareInjectable<api::storage::IKeyframesManager>(m_keyframesManager);
 	declareInjectable<api::storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
-	declareInjectable<api::solver::map::IKeyframeSelector>(m_keyframeSelector);
 	declareInjectable<api::solver::map::IBundler>(m_bundler);
 	declareInjectable<api::reloc::IKeyframeRetriever>(m_keyframeRetriever);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);

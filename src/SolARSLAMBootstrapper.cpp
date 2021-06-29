@@ -33,17 +33,12 @@ SolARSLAMBootstrapper::SolARSLAMBootstrapper() :ConfigurableBase(xpcf::toUUID<So
 {
 	addInterface<api::slam::IBootstrapper>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
-    declareInjectable<api::image::IImageFilter>(m_imageFilter, true);
-    declareInjectable<api::features::IDescriptorsExtractorFromImage>(m_descriptorExtractorFromImage, true);
-    declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector, true);
-    declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor, true);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
 	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
 	declareInjectable<api::solver::map::IKeyframeSelector>(m_keyframeSelector);
 	declareInjectable<api::solver::pose::I3DTransformFinderFrom2D2D>(m_poseFinderFrom2D2D);
-	declareInjectable<api::geom::IUndistortPoints>(m_undistortPoints);
 	declareInjectable<api::display::IMatchesOverlay>(m_matchesOverlay);
 	declareProperty("hasPose", m_hasPose);
 	declareProperty("nbMinInitPointCloud", m_nbMinInitPointCloud);
@@ -63,89 +58,59 @@ void SolARSLAMBootstrapper::setCameraParameters(const CamCalibration & intrinsic
 	m_camDistortion = distortionParams;
 	m_triangulator->setCameraParameters(m_camMatrix, m_camDistortion);
 	m_poseFinderFrom2D2D->setCameraParameters(m_camMatrix, m_camDistortion);
-    m_undistortPoints->setCameraParameters(m_camMatrix, m_camDistortion);
 }
 
 inline float angleCamDistance(const Transform3Df & pose1, const Transform3Df & pose2) {
 	return std::acos(pose1(0, 2) * pose2(0, 2) + pose1(1, 2) * pose2(1, 2) + pose1(2, 2) * pose2(2, 2));
 }
 
-FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef<Image> &view, const Transform3Df &pose)
+FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRef<Image> &view)
 {
-    SRef<Image>                         filteredImage;
-    Transform3Df						poseFrame;
-	std::vector<Keypoint>				keypoints, undistortedKeypoints;
-	SRef<DescriptorBuffer>				descriptors;
-	std::vector<DescriptorMatch>		matches;
-	SRef<Frame>							frame2;	
-	std::vector<SRef<CloudPoint>>		cloud, filteredCloud;	
+    view = frame->getView()->copy();
 	if (m_hasPose) {
-		if (pose.isApprox(Transform3Df::Identity()))
+		if (frame->getPose().isApprox(Transform3Df::Identity()))
 			return FrameworkReturnCode::_ERROR_;
-		else
-			poseFrame = pose;
 	}
 	else
-		poseFrame = Transform3Df::Identity();			
-
-    if (m_imageFilter)
-    {
-        // Pre-filtering image
-        m_imageFilter->filter(image, filteredImage);
-    }
-    else {
-       filteredImage = image;
-    }
-    view = filteredImage->copy();
-
-    // Extract features directly from the image if the IDescriptorsExtractorFromImage is defined in the configuration file
-    if (m_descriptorExtractorFromImage)
-    {
-        m_descriptorExtractorFromImage->extract(filteredImage, keypoints, descriptors);
-    }
-    else
-    {
-        // keypoint detection
-        m_keypointsDetector->detect(filteredImage, keypoints);
-        // feature extraction
-        m_descriptorExtractor->extract(filteredImage, keypoints, descriptors);
-    }
-    // undistort keypoints
-    m_undistortPoints->undistort(keypoints, undistortedKeypoints);
+		frame->setPose(Transform3Df::Identity());
+	
 	if (!m_initKeyframe1) {
 		// init first keyframe
 		m_initKeyframe1 = true;		
-        m_keyframe1 = xpcf::utils::make_shared<Keyframe>(keypoints, undistortedKeypoints, descriptors, filteredImage, poseFrame);
+        m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 	}
 	else {
-        frame2 = xpcf::utils::make_shared<Frame>(keypoints, undistortedKeypoints, descriptors, filteredImage, m_keyframe1, poseFrame);
+		// set reference keyframe
+		frame->setReferenceKeyframe(m_keyframe1);
 		// matching
-		m_matcher->match(m_keyframe1->getDescriptors(), descriptors, matches);
-		//m_matcher->matchInRegion(m_keyframe1, frame2, matches, image->getWidth() * (m_ratioDistanceIsKeyframe + 0.01));
-		m_matchesFilter->filter(matches, matches, m_keyframe1->getKeypoints(), frame2->getKeypoints());
+		std::vector<DescriptorMatch> matches;
+		m_matcher->match(m_keyframe1->getDescriptors(), frame->getDescriptors(), matches);
+		m_matchesFilter->filter(matches, matches, m_keyframe1->getKeypoints(), frame->getKeypoints());
 		if (matches.size() > 0) {
-            m_matchesOverlay->draw(filteredImage, view, m_keyframe1->getKeypoints(), frame2->getKeypoints(), matches);
+            m_matchesOverlay->draw(frame->getView(), view, m_keyframe1->getKeypoints(), frame->getKeypoints(), matches);
 		}
 		if (matches.size() < m_nbMinInitPointCloud) {
-			m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame2);
+			m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 		}
-		else if (m_keyframeSelector->select(frame2, matches)) {
+		else if (m_keyframeSelector->select(frame, matches)) {
 			// Find pose of the second keyframe if not has pose
 			if (!m_hasPose) {
-				m_poseFinderFrom2D2D->estimate(m_keyframe1->getKeypoints(), frame2->getKeypoints(), m_keyframe1->getPose(), poseFrame, matches);				
-				frame2->setPose(poseFrame);
+				Transform3Df pose;
+				m_poseFinderFrom2D2D->estimate(m_keyframe1->getKeypoints(), frame->getKeypoints(), m_keyframe1->getPose(), pose, matches);				
+				frame->setPose(pose);
 			}
-			if (angleCamDistance(m_keyframe1->getPose(), frame2->getPose()) > m_angleThres)
+			if (angleCamDistance(m_keyframe1->getPose(), frame->getPose()) > m_angleThres)
 				return FrameworkReturnCode::_ERROR_;
 			// Triangulate
-			m_triangulator->triangulate(m_keyframe1->getKeypoints(), frame2->getKeypoints(), m_keyframe1->getDescriptors(), frame2->getDescriptors(), matches,
-				std::make_pair(0, 1), m_keyframe1->getPose(), frame2->getPose(), cloud);
+			std::vector<SRef<CloudPoint>> cloud, filteredCloud;
+			m_triangulator->triangulate(m_keyframe1->getKeypoints(), frame->getKeypoints(), m_keyframe1->getDescriptors(), frame->getDescriptors(), matches,
+				std::make_pair(0, 1), m_keyframe1->getPose(), frame->getPose(), cloud);
 			// Filter cloud points
-			m_mapFilter->filter(m_keyframe1->getPose(), frame2->getPose(), cloud, filteredCloud);
+			m_mapFilter->filter(m_keyframe1->getPose(), frame->getPose(), cloud, filteredCloud);
 			if (filteredCloud.size() > m_nbMinInitPointCloud) {
 				// add keyframes to map manager
 				m_mapManager->addKeyframe(m_keyframe1);
-				m_keyframe2 = xpcf::utils::make_shared<Keyframe>(frame2);
+				m_keyframe2 = xpcf::utils::make_shared<Keyframe>(frame);
 				m_mapManager->addKeyframe(m_keyframe2);
 				// add intial point cloud to point cloud manager and update visibility map and update covisibility graph
 				for (auto const &it : filteredCloud)
@@ -153,7 +118,7 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Image> image, SRef
 				return FrameworkReturnCode::_SUCCESS;
 			}
 			else {
-				m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame2);
+				m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 				if (!m_hasPose)
 					m_keyframe1->setPose(Transform3Df::Identity());
 			}

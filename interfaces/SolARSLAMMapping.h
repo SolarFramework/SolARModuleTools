@@ -18,7 +18,6 @@
 #define SOLARSLAMMAPPING_H
 #include "api/slam/IMapping.h"
 #include "api/storage/IMapManager.h"
-#include "api/solver/map/IKeyframeSelector.h"
 #include "api/storage/ICovisibilityGraphManager.h"
 #include "api/storage/IKeyframesManager.h"
 #include "api/storage/IPointCloudManager.h"
@@ -47,7 +46,6 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::storage::IPointCloudManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraphManager}
-* @SolARComponentInjectable{SolAR::api::solver::map::IKeyframeSelector}
 * @SolARComponentInjectable{SolAR::api::solver::map::IBundler}
 * @SolARComponentInjectable{SolAR::api::reloc::IKeyframeRetriever}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
@@ -114,7 +112,6 @@ private:
     SRef<SolAR::datastructure::Keyframe>										m_updatedReferenceKeyframe;
     SolAR::datastructure::CamCalibration										m_camMatrix;
     SolAR::datastructure::CamDistortion											m_camDistortion;
-    SRef<SolAR::api::solver::map::IKeyframeSelector>							m_keyframeSelector;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;
     SRef<SolAR::api::solver::map::IBundler>										m_bundler;

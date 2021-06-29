@@ -19,10 +19,6 @@
 #include "api/slam/IBootstrapper.h"
 #include "datastructure/Image.h"
 #include "api/storage/IMapManager.h"
-#include "api/image/IImageFilter.h"
-#include "api/features/IKeypointDetector.h"
-#include "api/features/IDescriptorsExtractor.h"
-#include "api/features/IDescriptorsExtractorFromImage.h"
 #include "api/features/IDescriptorMatcher.h"
 #include "api/features/IMatchesFilter.h"
 #include "api/solver/map/ITriangulator.h"
@@ -30,7 +26,6 @@
 #include "api/solver/map/IKeyframeSelector.h"
 #include "api/display/IMatchesOverlay.h"
 #include "api/solver/pose/I3DTransformFinderFrom2D2D.h"
-#include "api/geom/IUndistortPoints.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
 
@@ -45,10 +40,6 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{ SolAR::api::storage::IMapManager}
-* @SolARComponentInjectable{ SolAR::api::image::IImageFilter, optional}
-* @SolARComponentInjectable{SolAR::api::features::IKeypointDetector, optional if an IDescriptorsExtractorFromImage is defined}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor, optional if an IDescriptorsExtractorFromImage is defined}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractorFromImage, optionnal if an IKeypointDetector and an IDescriptorsExtractor are defined}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
@@ -86,21 +77,15 @@ public:
 	/// @param[in] Camera distorsion parameters.
 	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
 
-	/// @brief This method uses images to boostrap
-	/// @param[in] image: input image to process
-	/// @param[out] view: output image to visualize
-	/// @param[in] pose: the pose of the input image
+	/// @brief This method uses images to boostrap mapping
+	/// @param[in] frame input image to process
+	/// @param[out] view output image to visualize
 	/// @return FrameworkReturnCode::_SUCCESS_ if initialization succeed, else FrameworkReturnCode::_ERROR.
-    FrameworkReturnCode process(const SRef<SolAR::datastructure::Image> image, SRef<SolAR::datastructure::Image> & view, const SolAR::datastructure::Transform3Df & pose = SolAR::datastructure::Transform3Df::Identity()) override;
+	FrameworkReturnCode process(const SRef<SolAR::datastructure::Frame>& frame,
+								SRef<SolAR::datastructure::Image> & view) override;
 
 	void unloadComponent() override final;
 	org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
-
-private:
-	/// bootstrap uses marker
-	FrameworkReturnCode initFiducialMarker();
-	/// bootstrap doesn't use marker
-	FrameworkReturnCode initMarkerLess();
 
 private:
     int                                                         m_hasPose = 1;
@@ -113,17 +98,12 @@ private:
     SolAR::datastructure::CamCalibration                        m_camMatrix;
     SolAR::datastructure::CamDistortion                         m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>						m_mapManager;
-    SRef<SolAR::api::image::IImageFilter>                       m_imageFilter;
-    SRef<SolAR::api::features::IKeypointDetector>				m_keypointsDetector;
-    SRef<SolAR::api::features::IDescriptorsExtractor>			m_descriptorExtractor;
-    SRef<SolAR::api::features::IDescriptorsExtractorFromImage>	m_descriptorExtractorFromImage;
     SRef<SolAR::api::features::IDescriptorMatcher>				m_matcher;
     SRef<SolAR::api::features::IMatchesFilter>					m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>				m_triangulator;
     SRef<SolAR::api::solver::map::IMapFilter>					m_mapFilter;
     SRef<SolAR::api::solver::map::IKeyframeSelector>			m_keyframeSelector;
     SRef<SolAR::api::solver::pose::I3DTransformFinderFrom2D2D>	m_poseFinderFrom2D2D;
-    SRef<SolAR::api::geom::IUndistortPoints>					m_undistortPoints;
     SRef<SolAR::api::display::IMatchesOverlay>					m_matchesOverlay;
 };
 
