@@ -133,7 +133,7 @@ private:
 	SRef<SolAR::datastructure::Map>							m_map;
 	SRef<SolAR::api::storage::IPointCloudManager>			m_pointCloudManager;
 	SRef<SolAR::api::storage::IKeyframesManager>			m_keyframesManager;
-	SRef<SolAR::api::storage::ICovisibilityGraphManager>	m_covisibilityGraph;
+	SRef<SolAR::api::storage::ICovisibilityGraphManager>	m_covisibilityGraphManager;
 	SRef<SolAR::api::reloc::IKeyframeRetriever>				m_keyframeRetriever;
 
 	std::string					m_directory;
