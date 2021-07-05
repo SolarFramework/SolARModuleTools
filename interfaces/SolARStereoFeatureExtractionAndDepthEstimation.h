@@ -16,13 +16,14 @@
 
 #ifndef SOLARSTEREOFEATUREEXTRACTIONANDDEPTHESTIMATION_H
 #define SOLARSTEREOFEATUREEXTRACTIONANDDEPTHESTIMATION_H
-#include "api/stereo/IStereoFeatureExtractionAndDepthEstimation.h"
+#include "api/features/IFeatureWithDepthFromStereo.h"
 #include "api/features/IKeypointDetector.h"
 #include "api/features/IDescriptorsExtractor.h"
 #include "api/geom/IUndistortPoints.h"
-#include "api/stereo/IStereoRectification.h"
-#include "api/stereo/IStereoDescriptorMatcher.h"
-#include "api/stereo/IStereoDepthEstimation.h"
+#include "api/image/IRectification.h"
+#include "api/features/IDescriptorMatcherStereo.h"
+#include "api/geom/IDepthEstimation.h"
+#include "api/geom/IReprojectionStereo.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
 
@@ -39,15 +40,16 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::features::IKeypointDetector}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor}
 * @SolARComponentInjectable{SolAR::api::geom::IUndistortPoints}
-* @SolARComponentInjectable{SolAR::stereo::IStereoRectification}
-* @SolARComponentInjectable{SolAR::stereo::IStereoDescriptorMatcher}
-* @SolARComponentInjectable{SolAR::stereo::IStereoDepthEstimation}
+* @SolARComponentInjectable{SolAR::image::IRectification}
+* @SolARComponentInjectable{SolAR::features::IDescriptorMatcherStereo}
+* @SolARComponentInjectable{SolAR::geom::IDepthEstimation}
+* @SolARComponentInjectable{SolAR::geom::IReprojectionStereo}
 * @SolARComponentInjectablesEnd
 *
 */
 
 class SOLAR_TOOLS_EXPORT_API SolARStereoFeatureExtractionAndDepthEstimation : public org::bcom::xpcf::ConfigurableBase,
-	public api::stereo::IStereoFeatureExtractionAndDepthEstimation
+    public api::features::IFeatureWithDepthFromStereo
 {
 public:
 	///@brief SolARStereoFeatureExtractionAndDepthEstimation constructor;
@@ -56,11 +58,11 @@ public:
 	///@brief SolARStereoFeatureExtractionAndDepthEstimation destructor;
 	~SolARStereoFeatureExtractionAndDepthEstimation() override;
 
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams,
-							const SolAR::datastructure::CamDistortion & distortionParams) override;
+	/// @brief this method is used to set rectification parameters of the stereo camera
+	/// @param[in] rectParams1 Rectification parameters of the first camera.
+	/// @param[in] rectParams2 Rectification parameters of the second camera.
+	void setRectificationParameters(const SolAR::datastructure::RectificationParameters & rectParams1,
+									const SolAR::datastructure::RectificationParameters & rectParams2) override;
 
 	/// @brief Perform feature extraction and keypoint depth estimation
 	/// @param[in] image1 The first image.
@@ -87,10 +89,12 @@ private:
 	std::vector<SRef<SolAR::api::features::IKeypointDetector>>		m_keypointsDetector;
 	std::vector<SRef<SolAR::api::features::IDescriptorsExtractor>>	m_descriptorExtractor;
 	std::vector<SRef<SolAR::api::geom::IUndistortPoints>>			m_undistortPoints;
-	std::vector<SRef<SolAR::api::stereo::IStereoRectification>>		m_stereoRectificator;
-	SRef<SolAR::api::stereo::IStereoDescriptorMatcher>				m_stereoMatcher;
-	SRef<SolAR::api::stereo::IStereoDepthEstimation>				m_stereoDepthEstimator;
-	float															m_focal;
+    std::vector<SRef<SolAR::api::image::IRectification>>			m_stereoRectificator;
+    SRef<SolAR::api::features::IDescriptorMatcherStereo>            m_stereoMatcher;
+    SRef<SolAR::api::geom::IDepthEstimation>                        m_stereoDepthEstimator;
+    SRef<SolAR::api::geom::IReprojectionStereo>                     m_stereoReprojector;
+	std::vector<SolAR::datastructure::RectificationParameters>		m_rectParams;
+	bool															m_isSetRectParams = false;
 };
 
 }

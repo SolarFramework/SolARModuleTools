@@ -16,7 +16,7 @@
 
 #ifndef SOLARSTEREODEPTHESTIMATION_H
 #define SOLARSTEREODEPTHESTIMATION_H
-#include "api/stereo/IStereoDepthEstimation.h"
+#include "api/geom/IDepthEstimation.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
 
@@ -31,7 +31,7 @@ namespace TOOLS {
 */
 
 class SOLAR_TOOLS_EXPORT_API SolARStereoDepthEstimation : public org::bcom::xpcf::ConfigurableBase,
-	public api::stereo::IStereoDepthEstimation
+	public api::geom::IDepthEstimation
 {
 public:
 	///@brief SolARStereoDepthEstimation constructor;
@@ -40,36 +40,21 @@ public:
 	///@brief SolARStereoDepthEstimation destructor;
 	~SolARStereoDepthEstimation() override;
 
-	/// @brief Depth estimation based on disparity of matched keypoints
-	/// @param[in,out] keypoints1 Keypoints of the first image.
-	/// @param[in,out] keypoints2 Keypoints of the second image.
+	/// @brief Depth estimation based on disparity of matched rectified keypoints in a stereo camera
+	/// @param[in,out] rectKeypoints1 Rectified keypoints of the first image and the depth estimation is stored in the keypoints.
+	/// @param[in,out] rectKeypoints2 Rectified keypoints of the second image and the depth estimation is stored in the keypoints.
 	/// @param[in] matches A vector of matches representing pairs of indices relatively to the first and second set of descriptors.
 	/// @param[in] focal The common focal of the camera.
 	/// @param[in] baseline The baseline distance of two cameras.
 	/// @param[in] type Stereo type
-	void estimate(std::vector<SolAR::datastructure::Keypoint>& keypoints1,
-				std::vector<SolAR::datastructure::Keypoint>& keypoints2,
-				const std::vector<SolAR::datastructure::DescriptorMatch>& matches,
-				const float& focal,
-				const float& baseline,
-				const SolAR::datastructure::StereoType& type) override;
-
-	/// @brief Depth estimation of unrectified keypoints based on depths of rectified keypoints
-	/// @param[in] rectifiedKeypoints The rectified keypoints containing depth information.
-	/// @param[in,out] unrectifiedKeypoints The unrectified keypoints for estimating depth information.
-	/// @param[in] rectParams The rectification parameters.
-	void estimate(const std::vector<SolAR::datastructure::Keypoint>& rectifiedKeypoints,
-				std::vector<SolAR::datastructure::Keypoint>& unrectifiedKeypoints,
-				const SolAR::datastructure::RectificationParameters& rectParams) override;
-
-	/// @brief Reproject 2D points with depths of a frame to 3D cloud points in the world coordinate system
-	/// @param[in] frame The frame.
-	/// @param[in] intrinsicParams The intrinsic parameters of the camera.
-	/// @param[out] cloudPoints The output cloud points.
-	void reprojectToCloudPoints(SRef<SolAR::datastructure::Frame> frame,
-								const SolAR::datastructure::CamCalibration& intrinsicParams,
-								std::vector<SRef<SolAR::datastructure::CloudPoint>>& cloudPoints) override;
-
+	/// @return FrameworkReturnCode::_SUCCESS if estimating succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode estimate(std::vector<SolAR::datastructure::Keypoint>& rectKeypoints1,
+                                 std::vector<SolAR::datastructure::Keypoint>& rectKeypoints2,
+                                 const std::vector<SolAR::datastructure::DescriptorMatch>& matches,
+                                 const float& focal,
+                                 const float& baseline,
+                                 const SolAR::datastructure::StereoType& type) override;
+	
 	void unloadComponent() override final;
 
 private:

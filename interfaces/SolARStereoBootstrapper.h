@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef SOLARSTEREOMAPPINGBOOTSTRAPPER_H
-#define SOLARSTEREOMAPPINGBOOTSTRAPPER_H
-#include "api/stereo/IStereoMappingBootstrapper.h"
-#include "api/stereo/IStereoDepthEstimation.h"
+#ifndef SOLARSTEREOBOOTSTRAPPER_H
+#define SOLARSTEREOBOOTSTRAPPER_H
+#include "api/slam/IBootstrapperStereo.h"
+#include "api/geom/IReprojectionStereo.h"
 #include "api/storage/IMapManager.h"
 #include "api/display/I2DOverlay.h"
 #include "SolARToolsAPI.h"
@@ -28,27 +28,27 @@ namespace MODULES {
 namespace TOOLS {
 
 /**
-* @class SolARStereoMappingBootstrapper
+* @class SolARStereoBootstrapper
 * @brief <B>Perform mapping bootstrapper using stereo camera.</B>
 * <TT>UUID: 02064ef7-e7b9-40e2-8793-6bd177f4bc79</TT>
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
 * @SolARComponentInjectable{SolAR::api::display::I2DOverlay}
-* @SolARComponentInjectable{SolAR::stereo::IStereoDepthEstimation}
+* @SolARComponentInjectable{SolAR::geom::IReprojectionStereo}
 * @SolARComponentInjectablesEnd
 *
 */
 
-class SOLAR_TOOLS_EXPORT_API SolARStereoMappingBootstrapper : public org::bcom::xpcf::ConfigurableBase,
-	public api::stereo::IStereoMappingBootstrapper
+class SOLAR_TOOLS_EXPORT_API SolARStereoBootstrapper : public org::bcom::xpcf::ConfigurableBase,
+    public api::slam::IBootstrapperStereo
 {
 public:
-	///@brief SolARStereoMappingBootstrapper constructor;
-	SolARStereoMappingBootstrapper();
+    ///@brief SolARStereoBootstrapper constructor;
+    SolARStereoBootstrapper();
 
-	///@brief SolARStereoMappingBootstrapper destructor;
-	~SolARStereoMappingBootstrapper() override;
+    ///@brief SolARStereoBootstrapper destructor;
+    ~SolARStereoBootstrapper() override;
 
 	/// @brief this method is used to set intrinsic parameters of the camera
 	/// @param[in] intrinsicParams camera calibration matrix parameters.
@@ -66,7 +66,7 @@ public:
 private:
 	int													m_nbMinInitPointCloud = 50;
 	datastructure::CamCalibration						m_intrinsicParams;
-	SRef<SolAR::api::stereo::IStereoDepthEstimation>	m_stereoDepthEstimator;
+    SRef<SolAR::api::geom::IReprojectionStereo>         m_stereoReprojector;
 	SRef<SolAR::api::storage::IMapManager>				m_mapManager;
 	SRef<SolAR::api::display::I2DOverlay>               m_overlay2DGreen, m_overlay2DRed;
 };
@@ -75,4 +75,4 @@ private:
 }
 }
 
-#endif // SOLARSTEREOMAPPINGBOOTSTRAPPER_H
+#endif // SOLARSTEREOBOOTSTRAPPER_H

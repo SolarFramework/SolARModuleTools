@@ -56,7 +56,8 @@ class SolARSLAMTracking;
 class SolARSLAMMapping;
 class SolARStereoDepthEstimation;
 class SolARStereoFeatureExtractionAndDepthEstimation;
-class SolARStereoMappingBootstrapper;
+class SolARStereoBootstrapper;
+class SolARStereoReprojection;
 
 }
 }
@@ -203,10 +204,14 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoFeatureExtraction
 							"SolARStereoFeatureExtractionAndDepthEstimation",
 							"Perform feature extraction and keypoint depth estimation from each stereo images.")
 
-XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoMappingBootstrapper,
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoBootstrapper,
 							"02064ef7-e7b9-40e2-8793-6bd177f4bc79",
-							"SolARStereoMappingBootstrapper",
-							"Perform mapping bootstrapper using stereo camera.")
+                            "SolARStereoBootstrapper",
+                            "Perform bootstrapper using stereo camera.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoReprojection,
+                            "6f0c5373-1b00-41ce-ab1b-a845b83f65b3",
+                            "SolARStereoReprojection",
+                            "Reproject keypoints with estimating depth to 3D cloud points.")
 							
 
 #endif // SOLARMODULETOOLS_TRAITS_H

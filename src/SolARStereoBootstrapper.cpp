@@ -14,45 +14,45 @@
  * limitations under the License.
  */
 
-#include "SolARStereoMappingBootstrapper.h"
+#include "SolARStereoBootstrapper.h"
 #include "core/Log.h"
 #include <thread>
 
 namespace xpcf = org::bcom::xpcf;
 
-XPCF_DEFINE_FACTORY_CREATE_INSTANCE(SolAR::MODULES::TOOLS::SolARStereoMappingBootstrapper);
+XPCF_DEFINE_FACTORY_CREATE_INSTANCE(SolAR::MODULES::TOOLS::SolARStereoBootstrapper);
 
 namespace SolAR {
 using namespace datastructure;
 namespace MODULES {
 namespace TOOLS {
 
-SolARStereoMappingBootstrapper::SolARStereoMappingBootstrapper() :ConfigurableBase(xpcf::toUUID<SolARStereoMappingBootstrapper>())
+SolARStereoBootstrapper::SolARStereoBootstrapper() :ConfigurableBase(xpcf::toUUID<SolARStereoBootstrapper>())
 {
-	addInterface<api::stereo::IStereoMappingBootstrapper>(this);
+    addInterface<api::slam::IBootstrapperStereo>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
-	declareInjectable<api::stereo::IStereoDepthEstimation>(m_stereoDepthEstimator);
+    declareInjectable<api::geom::IReprojectionStereo>(m_stereoReprojector);
 	declareInjectable<api::display::I2DOverlay>(m_overlay2DGreen, "Green");
 	declareInjectable<api::display::I2DOverlay>(m_overlay2DRed, "Red");
 	declareProperty("nbMinInitPointCloud", m_nbMinInitPointCloud);
-	LOG_DEBUG("SolARStereoMappingBootstrapper constructor");
+    LOG_DEBUG("SolARStereoBootstrapper constructor");
 }
 
-SolARStereoMappingBootstrapper::~SolARStereoMappingBootstrapper()
+SolARStereoBootstrapper::~SolARStereoBootstrapper()
 {
-	LOG_DEBUG("SolARStereoMappingBootstrapper destructor");
+    LOG_DEBUG("SolARStereoBootstrapper destructor");
 }
 
-void SolARStereoMappingBootstrapper::setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams)
+void SolARStereoBootstrapper::setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams)
 {
 	m_intrinsicParams = intrinsicParams;
 }
 
-FrameworkReturnCode SolARStereoMappingBootstrapper::process(const SRef<SolAR::datastructure::Frame>& frame, SRef<SolAR::datastructure::Image>& view)
+FrameworkReturnCode SolARStereoBootstrapper::process(const SRef<SolAR::datastructure::Frame>& frame, SRef<SolAR::datastructure::Image>& view)
 {
 	view = frame->getView()->copy();
 	std::vector<SRef<CloudPoint>> cloudPoints;
-	m_stereoDepthEstimator->reprojectToCloudPoints(frame, m_intrinsicParams, cloudPoints);
+    m_stereoReprojector->reprojectToCloudPoints(frame, m_intrinsicParams, cloudPoints);
 	LOG_DEBUG("Number of estimated cloud points: {}", cloudPoints.size());
 	// draw to display
 	const std::vector<Keypoint>& undistortedKeypoints = frame->getUndistortedKeypoints();

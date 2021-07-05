@@ -29,7 +29,7 @@ namespace TOOLS {
 
 SolARStereoDepthEstimation::SolARStereoDepthEstimation() :ConfigurableBase(xpcf::toUUID<SolARStereoDepthEstimation>())
 {
-	declareInterface<api::stereo::IStereoDepthEstimation>(this);
+	declareInterface<api::geom::IDepthEstimation>(this);
 	declareProperty("ratioNear", m_ratioNear);
 	declareProperty("ratioFar", m_ratioFar);
 	LOG_DEBUG("SolARStereoDepthEstimation constructor");
@@ -40,7 +40,7 @@ SolARStereoDepthEstimation::~SolARStereoDepthEstimation()
 	LOG_DEBUG("SolARStereoDepthEstimation destructor");
 }
 
-void SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keypoint>& keypoints1, std::vector<SolAR::datastructure::Keypoint>& keypoints2, const std::vector<SolAR::datastructure::DescriptorMatch>& matches, const float & focal, const float & baseline, const SolAR::datastructure::StereoType & type)
+FrameworkReturnCode SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keypoint>& keypoints1, std::vector<SolAR::datastructure::Keypoint>& keypoints2, const std::vector<SolAR::datastructure::DescriptorMatch>& matches, const float & focal, const float & baseline, const SolAR::datastructure::StereoType & type)
 {
 	// disparity min max
 	float dMin = focal * m_ratioFar;
@@ -61,50 +61,8 @@ void SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keyp
 			kp2.setDepth(fb / disparity);
 		}
 	}
+	return FrameworkReturnCode::_SUCCESS;
 }
-
-void SolARStereoDepthEstimation::estimate(const std::vector<SolAR::datastructure::Keypoint>& rectifiedKeypoints, std::vector<SolAR::datastructure::Keypoint>& unrectifiedKeypoints, const SolAR::datastructure::RectificationParameters & rectParams)
-{
-	Maths::Matrix3f rot = rectParams.rotation;
-	Maths::Matrix<float, 3, 4> proj = rectParams.projection;
-	for (int i = 0; i < rectifiedKeypoints.size(); ++i)
-		if (rectifiedKeypoints[i].getDepth() > 0) {
-			float u = rectifiedKeypoints[i].getX();
-			float v = rectifiedKeypoints[i].getY();
-			float Z = rectifiedKeypoints[i].getDepth();
-			float X = (u - proj(0, 2)) * Z / proj(0, 0);
-			float Y = (v - proj(1, 2)) * Z / proj(1, 1);
-			unrectifiedKeypoints[i].setDepth(rot(0, 2) * X + rot(1, 2) * Y + rot(2, 2) * Z);
-		}
-}
-
-void SolARStereoDepthEstimation::reprojectToCloudPoints(SRef<SolAR::datastructure::Frame> frame, const SolAR::datastructure::CamCalibration & intrinsicParams, std::vector<SRef<SolAR::datastructure::CloudPoint>>& cloudPoints)
-{
-	const std::vector<Keypoint>& undistortedKeypoints = frame->getUndistortedKeypoints();
-	const SRef<DescriptorBuffer>& descriptors = frame->getDescriptors();
-	const Transform3Df& pose = frame->getPose();
-	for (int i = 0; i < undistortedKeypoints.size(); ++i)
-		if (undistortedKeypoints[i].getDepth() > 0) {
-			std::map<uint32_t, uint32_t> visibility;
-			visibility[0] = i;
-			float Z = undistortedKeypoints[i].getDepth();
-			float X = (undistortedKeypoints[i].getX() - intrinsicParams(0, 2)) * Z / intrinsicParams(0, 0);
-			float Y = (undistortedKeypoints[i].getY() - intrinsicParams(1, 2)) * Z / intrinsicParams(1, 1);
-			Vector3f pts3D(X, Y, Z);
-			Vector3f pts3DTrans = pose * pts3D;
-			// calculate view direction
-			Vector3f viewDirection(pose(0, 3) - pts3DTrans[0], pose(1, 3) - pts3DTrans[1], pose(2, 3) - pts3DTrans[2]);
-			viewDirection = viewDirection / viewDirection.norm();
-			// get descriptor 
-			SRef<DescriptorBuffer> descriptor = xpcf::utils::make_shared<DescriptorBuffer>(descriptors->getDescriptor(i));
-			SRef<CloudPoint> cp = xpcf::utils::make_shared<CloudPoint>(pts3DTrans[0], pts3DTrans[1], pts3DTrans[2],
-				undistortedKeypoints[i].getR(), undistortedKeypoints[i].getG(), undistortedKeypoints[i].getB(), viewDirection[0], viewDirection[1], viewDirection[2],
-				0.f, visibility, descriptor);
-			cloudPoints.push_back(cp);
-		}
-}
-
-
 
 }
 }
