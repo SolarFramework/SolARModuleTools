@@ -20,7 +20,7 @@
 #include "api/solver/map/IMapUpdate.h"
 #include "api/storage/IMapManager.h"
 #include "api/geom/IProject.h"
-#include "api/features/IDescriptorMatcher.h"
+#include "api/features/IDescriptorMatcherRegion.h"
 #include "xpcf/component/ConfigurableBase.h"
 #include "SolARToolsAPI.h"
 
@@ -35,7 +35,7 @@ namespace TOOLS {
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
 * @SolARComponentInjectable{SolAR::api::geom::IProject}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherRegion}
 * @SolARComponentInjectablesEnd
 *
 * @SolARComponentPropertiesBegin
@@ -82,7 +82,7 @@ private:
 private:
 	SRef<api::storage::IMapManager>					m_mapManager;
 	SRef<api::geom::IProject>						m_projector;
-	SRef<api::features::IDescriptorMatcher>			m_matcher;
+	SRef<api::features::IDescriptorMatcherRegion>	m_matcher;
 	SRef<datastructure::CovisibilityGraph>          m_covisibilityGraph;
 	SRef<datastructure::PointCloud>                 m_pointCloud;
 	SRef<datastructure::KeyframeCollection>         m_keyframeCollection;

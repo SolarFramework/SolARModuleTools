@@ -33,7 +33,7 @@ SolARMapUpdate::SolARMapUpdate():ConfigurableBase(xpcf::toUUID<SolARMapUpdate>()
     addInterface<api::solver::map::IMapUpdate>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
 	declareInjectable<api::geom::IProject>(m_projector);
-	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
+	declareInjectable<api::features::IDescriptorMatcherRegion>(m_matcher);
 	declareProperty("thresAngleViewDirection", m_thresAngleViewDirection);
 	LOG_DEBUG("SolARMapUpdate constructor");
 }
@@ -148,7 +148,7 @@ void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& lo
 		}
 		std::vector<DescriptorMatch> allMatches;
 		std::vector<bool> isMatchedCloudPoints(localMapUnseenCandidates.size(), false);
-		m_matcher->matchInRegion(projected2DPtsCandidates, desAllLocalMapUnseen, newKeyframe, allMatches);
+		m_matcher->match(projected2DPtsCandidates, desAllLocalMapUnseen, newKeyframe, allMatches);
 		// update new visibilities of new frame
 		int nbMatchesLocalMap(0);
 		for (const auto &it_match : allMatches) {

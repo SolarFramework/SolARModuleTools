@@ -27,7 +27,7 @@
 #include "api/solver/map/ITriangulator.h"
 #include "api/solver/map/IMapFilter.h"
 #include "api/geom/IProject.h"
-#include "api/features/IDescriptorMatcher.h"
+#include "api/features/IDescriptorMatcherGeometric.h"
 #include "api/solver/pose/I2D3DCorrespondencesFinder.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
@@ -52,7 +52,7 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
 * @SolARComponentInjectable{SolAR::solver::map::IMapFilter}
 * @SolARComponentInjectable{SolAR::api::geom::IProject}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherGeometric}
 * @SolARComponentInjectable{SolAR::api::solver::pose::I2D3DCorrespondencesFinder}
 * @SolARComponentInjectablesEnd
 *
@@ -122,7 +122,7 @@ private:
     SRef<SolAR::api::solver::map::ITriangulator>								m_triangulator;
     SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilter;
     SRef<SolAR::api::geom::IProject>											m_projector;
-    SRef<SolAR::api::features::IDescriptorMatcher>								m_matcher;
+    SRef<SolAR::api::features::IDescriptorMatcherGeometric>						m_matcher;
     SRef<SolAR::api::solver::pose::I2D3DCorrespondencesFinder>					m_corr2D3DFinder;
 	std::map<uint32_t, std::pair<SRef<SolAR::datastructure::CloudPoint>, uint32_t>>	m_recentAddedCloudPoints;
 };

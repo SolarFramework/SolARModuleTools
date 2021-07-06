@@ -21,6 +21,7 @@
 #include "api/storage/IKeyframesManager.h"
 #include "api/storage/IMapManager.h"
 #include "api/features/IDescriptorMatcher.h"
+#include "api/features/IDescriptorMatcherRegion.h"
 #include "api/features/IMatchesFilter.h"
 #include "api/display/I2DOverlay.h"
 #include "api/solver/pose/I2D3DCorrespondencesFinder.h"
@@ -44,6 +45,7 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherRegion}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::pose::I2D3DCorrespondencesFinder}
 * @SolARComponentInjectable{SolAR::api::solver::pose::I3DTransformFinderFrom2D3D}
@@ -116,6 +118,7 @@ private:
     SolAR::datastructure::CamDistortion                             m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
     SRef<SolAR::api::features::IDescriptorMatcher>                  m_matcher;
+    SRef<SolAR::api::features::IDescriptorMatcherRegion>            m_matcherRegion;
     SRef<SolAR::api::features::IMatchesFilter>                      m_matchesFilter;
     SRef<api::display::I2DOverlay>                                  m_overlay2DGreen, m_overlay2DRed;
     SRef<SolAR::api::solver::pose::I2D3DCorrespondencesFinder>      m_corr2D3DFinder;

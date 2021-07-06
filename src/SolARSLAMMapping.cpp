@@ -43,7 +43,7 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
 	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
 	declareInjectable<api::geom::IProject>(m_projector);
-	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
+	declareInjectable<api::features::IDescriptorMatcherGeometric>(m_matcher);
 	declareInjectable<api::solver::pose::I2D3DCorrespondencesFinder>(m_corr2D3DFinder);
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("maxNbNeighborKfs", m_maxNbNeighborKfs);

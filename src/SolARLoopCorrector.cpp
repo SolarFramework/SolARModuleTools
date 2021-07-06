@@ -36,7 +36,7 @@ SolARLoopCorrector::SolARLoopCorrector():ConfigurableBase(xpcf::toUUID<SolARLoop
     declareInjectable<storage::IKeyframesManager>(m_keyframesManager);
     declareInjectable<storage::IPointCloudManager>(m_pointCloudManager);
     declareInjectable<storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
-    declareInjectable<features::IDescriptorMatcher>(m_matcher);
+    declareInjectable<features::IDescriptorMatcherRegion>(m_matcher);
     declareInjectable<geom::I3DTransform>(m_transform3D);
     declareInjectable<geom::IProject>(m_projector);
 	LOG_DEBUG("SolARLoopCorrector constructor");
@@ -160,7 +160,7 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 		m_projector->project(uncheckCurrentlocalCPs, projected2DPts, keyframe->getPose());
 		// Matching features
 		std::vector<DescriptorMatch> matches;
-		m_matcher->matchInRegion(projected2DPts, desUncheckCurrentlocalCPs, keyframe, matches, 5.f);
+		m_matcher->match(projected2DPts, desUncheckCurrentlocalCPs, keyframe, matches, 5.f);
 		// get duplicated point if finding the corresponding cloud point
 		for (const auto &it_match : matches) {
 			int idxKeypoint = it_match.getIndexInDescriptorB();

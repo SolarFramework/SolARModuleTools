@@ -22,7 +22,7 @@
 #include "api/storage/ICovisibilityGraphManager.h"
 #include "api/storage/IKeyframesManager.h"
 #include "api/geom/I3DTransform.h"
-#include "api/features/IDescriptorMatcher.h"
+#include "api/features/IDescriptorMatcherRegion.h"
 #include "api/geom/IProject.h"
 #include "xpcf/component/ConfigurableBase.h"
 #include "SolARToolsAPI.h"
@@ -43,7 +43,7 @@ namespace TOOLS {
  * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
  * @SolARComponentInjectable{SolAR::api::storage::IPointCloudManager}
  * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraph}
- * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
+ * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherRegion}
  * @SolARComponentInjectable{SolAR::api::geom::I3DTransform}
  * @SolARComponentInjectable{SolAR::api::geom::IProject}
  * @SolARComponentInjectablesEnd
@@ -80,7 +80,7 @@ private:
     SRef<SolAR::api::storage::IKeyframesManager>			m_keyframesManager;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>    m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IPointCloudManager>			m_pointCloudManager;
-    SRef<SolAR::api::features::IDescriptorMatcher>			m_matcher;
+    SRef<SolAR::api::features::IDescriptorMatcherRegion>	m_matcher;
     SRef<SolAR::api::geom::I3DTransform>					m_transform3D;
     SRef<SolAR::api::geom::IProject>						m_projector;
     SolAR::datastructure::CamCalibration					m_camMatrix;
