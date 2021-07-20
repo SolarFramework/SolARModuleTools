@@ -20,7 +20,7 @@
 #include "api/features/IKeypointDetector.h"
 #include "api/features/IDescriptorsExtractor.h"
 #include "api/geom/IUndistortPoints.h"
-#include "api/image/IRectification.h"
+#include "api/geom/I2DPointsRectification.h"
 #include "api/features/IDescriptorMatcherStereo.h"
 #include "api/geom/IDepthEstimation.h"
 #include "api/geom/IReprojectionStereo.h"
@@ -40,7 +40,7 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::features::IKeypointDetector}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor}
 * @SolARComponentInjectable{SolAR::api::geom::IUndistortPoints}
-* @SolARComponentInjectable{SolAR::image::IRectification}
+* @SolARComponentInjectable{SolAR::geom::I2DPointsRectification}
 * @SolARComponentInjectable{SolAR::features::IDescriptorMatcherStereo}
 * @SolARComponentInjectable{SolAR::geom::IDepthEstimation}
 * @SolARComponentInjectable{SolAR::geom::IReprojectionStereo}
@@ -58,11 +58,15 @@ public:
 	///@brief SolARStereoFeatureExtractionAndDepthEstimation destructor;
 	~SolARStereoFeatureExtractionAndDepthEstimation() override;
 
-	/// @brief this method is used to set rectification parameters of the stereo camera
-	/// @param[in] rectParams1 Rectification parameters of the first camera.
-	/// @param[in] rectParams2 Rectification parameters of the second camera.
-	void setRectificationParameters(const SolAR::datastructure::RectificationParameters & rectParams1,
-									const SolAR::datastructure::RectificationParameters & rectParams2) override;
+    /// @brief this method is used to set rectification parameters of the stereo camera
+    /// @param[in] camParams1 Camera parameters of the first camera.
+    /// @param[in] camParams2 Camera parameters of the second camera.
+    /// @param[in] rectParams1 Rectification parameters of the first camera.
+    /// @param[in] rectParams2 Rectification parameters of the second camera.
+    void setRectificationParameters(const SolAR::datastructure::CameraParameters& camParams1,
+                                    const SolAR::datastructure::CameraParameters& camParams2,
+                                    const SolAR::datastructure::RectificationParameters & rectParams1,
+                                    const SolAR::datastructure::RectificationParameters & rectParams2) override;
 
 	/// @brief Perform feature extraction and keypoint depth estimation
 	/// @param[in] image1 The first image.
@@ -89,12 +93,14 @@ private:
 	std::vector<SRef<SolAR::api::features::IKeypointDetector>>		m_keypointsDetector;
 	std::vector<SRef<SolAR::api::features::IDescriptorsExtractor>>	m_descriptorExtractor;
 	std::vector<SRef<SolAR::api::geom::IUndistortPoints>>			m_undistortPoints;
-    std::vector<SRef<SolAR::api::image::IRectification>>			m_stereoRectificator;
+    std::vector<SRef<SolAR::api::geom::I2DPointsRectification>>     m_stereoRectificator;
     SRef<SolAR::api::features::IDescriptorMatcherStereo>            m_stereoMatcher;
     SRef<SolAR::api::geom::IDepthEstimation>                        m_stereoDepthEstimator;
     SRef<SolAR::api::geom::IReprojectionStereo>                     m_stereoReprojector;
+	std::vector<SolAR::datastructure::CameraParameters>				m_camParams;
 	std::vector<SolAR::datastructure::RectificationParameters>		m_rectParams;
-	bool															m_isSetRectParams = false;
+	bool															m_isSetParams = false;
+	std::vector<bool>												m_isPassRectify;
 };
 
 }

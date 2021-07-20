@@ -16,9 +16,8 @@
 
 #ifndef SOLARSTEREOREPROJECTION_H
 #define SOLARSTEREOREPROJECTION_H
-#include "api/geom/IReprojectionStereo.h"
+#include "base/geom/AReprojectionStereo.h"
 #include "SolARToolsAPI.h"
-#include "xpcf/component/ConfigurableBase.h"
 
 namespace SolAR {
 namespace MODULES {
@@ -30,8 +29,7 @@ namespace TOOLS {
 * <TT>UUID: 6f0c5373-1b00-41ce-ab1b-a845b83f65b3</TT>
 */
 
-class SOLAR_TOOLS_EXPORT_API SolARStereoReprojection : public org::bcom::xpcf::ConfigurableBase,
-    public api::geom::IReprojectionStereo
+class SOLAR_TOOLS_EXPORT_API SolARStereoReprojection : public base::geom::AReprojectionStereo
 {
 public:
     ///@brief SolARStereoReprojection constructor;
@@ -49,12 +47,16 @@ public:
                                                    const SolAR::datastructure::RectificationParameters& rectParams,
                                                    std::vector<SolAR::datastructure::Keypoint>& unrectifiedKeypoints) override;
 
-    /// @brief Reproject 2D keypoints with depths of a frame to 3D cloud points in the world coordinate system
-    /// @param[in] frame The frame.
+    /// @brief Reproject 2D keypoints with depths to 3D cloud points in the world coordinate system
+    /// @param[in] undistortedkeypoints The undistorted keypoints of image.
+    /// @param[in] descriptors The descriptors corresponding to the keypoints.
+    /// @param[in] pose The pose of image.
     /// @param[in] intrinsicParams The intrinsic parameters of the camera.
     /// @param[out] cloudPoints The output cloud points.
     /// @return FrameworkReturnCode::_SUCCESS if reprojecting succeed, else FrameworkReturnCode::_ERROR_
-    FrameworkReturnCode reprojectToCloudPoints(SRef<SolAR::datastructure::Frame> frame,
+    FrameworkReturnCode reprojectToCloudPoints(const std::vector<SolAR::datastructure::Keypoint>& undistortedKeypoints,
+                                               const SRef<SolAR::datastructure::DescriptorBuffer> descriptors,
+                                               const SolAR::datastructure::Transform3Df& pose,
                                                const SolAR::datastructure::CamCalibration& intrinsicParams,
                                                std::vector<SRef<SolAR::datastructure::CloudPoint>>& cloudPoints) override;
 	

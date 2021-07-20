@@ -74,9 +74,5 @@ configfile.path = $${TARGETDEPLOYDIR}/
 configfile.files = $${PWD}/SolARTest_ModuleTools_3DTransformEstimationSACFrom3D3D_conf.xml
 INSTALLS += configfile
 
-DISTFILES += \
-    SolARTest_ModuleTools_3DTransformEstimationSACFrom3D3D_conf.xml \
-    packagedependencies.txt
-
 #NOTE : Must be placed at the end of the .pro
 include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/remaken_install_target.pri)))) # Shell_quote & shell_path required for visual on windows

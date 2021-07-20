@@ -39,7 +39,7 @@ SolARStereoFeatureExtractionAndDepthEstimation::SolARStereoFeatureExtractionAndD
         declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector[i], name.c_str());
         declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor[i], name.c_str());
         declareInjectable<api::geom::IUndistortPoints>(m_undistortPoints[i], name.c_str());
-        declareInjectable<api::image::IRectification>(m_stereoRectificator[i], name.c_str());
+        declareInjectable<api::geom::I2DPointsRectification>(m_stereoRectificator[i], name.c_str());
     }
     declareInjectable<api::features::IDescriptorMatcherStereo>(m_stereoMatcher);
     declareInjectable<api::geom::IDepthEstimation>(m_stereoDepthEstimator);
@@ -52,19 +52,27 @@ SolARStereoFeatureExtractionAndDepthEstimation::~SolARStereoFeatureExtractionAnd
     LOG_DEBUG("SolARStereoFeatureExtractionAndDepthEstimation destructor");
 }
 
-void SolARStereoFeatureExtractionAndDepthEstimation::setRectificationParameters(const SolAR::datastructure::RectificationParameters & rectParams1, const SolAR::datastructure::RectificationParameters & rectParams2)
+void SolARStereoFeatureExtractionAndDepthEstimation::setRectificationParameters(const SolAR::datastructure::CameraParameters & camParams1, const SolAR::datastructure::CameraParameters & camParams2, const SolAR::datastructure::RectificationParameters & rectParams1, const SolAR::datastructure::RectificationParameters & rectParams2)
 {
 	m_rectParams.resize(2);
+	m_camParams.resize(2);
 	m_rectParams[0] = rectParams1;
 	m_rectParams[1] = rectParams2;
+	m_camParams[0] = camParams1;
+	m_camParams[1] = camParams2;
 	for (int i = 0; i < 2; ++i)
-		m_undistortPoints[i]->setCameraParameters(m_rectParams[0].camParams.intrinsic, m_rectParams[0].camParams.distortion);
-	m_isSetRectParams = true;
+		m_undistortPoints[i]->setCameraParameters(m_camParams[0].intrinsic, m_camParams[0].distortion);
+	m_isSetParams = true;
+	m_isPassRectify.resize(2, false);
+	// No need rectify if rectification rotation parameter is identity
+	for (int i = 0; i < 2; ++i)
+		if (!m_rectParams[i].rotation.isIdentity())
+			m_isPassRectify[i] = true;
 }
 
 FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef<SolAR::datastructure::Image> image1, SRef<SolAR::datastructure::Image> image2, SRef<SolAR::datastructure::Frame>& frame1, SRef<SolAR::datastructure::Frame>& frame2)
 {
-	if (!m_isSetRectParams) {
+	if (!m_isSetParams) {
 		LOG_ERROR("Must set rectification parameters before");
 		return FrameworkReturnCode::_ERROR_;
 	}
@@ -90,7 +98,7 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
     LOG_DEBUG("Number of matches: {}", matches.size());
 
     // depth estimation
-	if (m_rectParams[0].rotation.isIdentity() && m_rectParams[1].rotation.isIdentity()) {
+	if (m_isPassRectify[0] && m_isPassRectify[1]) {
 		m_stereoDepthEstimator->estimate(undistortedKeypoints[0], undistortedKeypoints[1], matches,
 			m_rectParams[0].projection(0, 0), m_rectParams[0].baseline, m_rectParams[0].type);
 	}
@@ -114,10 +122,9 @@ void SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify(int index
 	if (keypoints.size() == 0)
 		return;
     m_undistortPoints[indexCamera]->undistort(keypoints, undistortedKeypoints);
-    m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors);
-	// No need rectify if rectification rotation parameter is identity
-	if (!m_rectParams[indexCamera].rotation.isIdentity())
-		m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, m_rectParams[indexCamera], undistortedRectifiedKeypoints);
+    m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors);	
+	if (!m_isPassRectify[indexCamera])
+		m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, m_camParams[indexCamera], m_rectParams[indexCamera], undistortedRectifiedKeypoints);
 	else
 		undistortedRectifiedKeypoints = undistortedKeypoints;
 }

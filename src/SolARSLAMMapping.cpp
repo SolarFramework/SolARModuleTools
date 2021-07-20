@@ -54,11 +54,10 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	LOG_DEBUG("SolARSLAMMapping constructor");
 }
 
-void SolARSLAMMapping::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_triangulator->setCameraParameters(m_camMatrix, m_camDistortion);
-    m_projector->setCameraParameters(m_camMatrix, m_camDistortion);
+void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
+	m_camParams = camParams;
+	m_triangulator->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
+    m_projector->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
 }
 
 FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyframe> & keyframe)
@@ -145,7 +144,7 @@ bool SolARSLAMMapping::checkNeedNewKeyframeInLocalMap(const SRef<Frame>& frame)
 				return true;
 			// Check find enough matches to best ret keyframe
 			std::vector<DescriptorMatch> matches;
-			m_matcher->match(bestRetKeyframe, frame, bestRetKeyframe->getPose(), frame->getPose(), m_camMatrix, matches);		
+			m_matcher->match(bestRetKeyframe, frame, m_camParams, matches);		
 			std::vector<Point2Df> pts2d;
 			std::vector<Point3Df> pts3d;
 			std::vector < std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
@@ -240,7 +239,7 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 
 		// Feature matching based on epipolar constraint
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
-		m_matcher->match(keyframe, tmpKf, newKf_pose, tmpKf_pose, m_camMatrix, tmpMatches, newKf_indexKeypoints);
+		m_matcher->match(keyframe, tmpKf, m_camParams, tmpMatches, newKf_indexKeypoints);
 
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {

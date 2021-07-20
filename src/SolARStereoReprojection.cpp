@@ -27,9 +27,8 @@ using namespace datastructure;
 namespace MODULES {
 namespace TOOLS {
 
-SolARStereoReprojection::SolARStereoReprojection() :ConfigurableBase(xpcf::toUUID<SolARStereoReprojection>())
+SolARStereoReprojection::SolARStereoReprojection() : base::geom::AReprojectionStereo(xpcf::toMap<SolARStereoReprojection>())
 {
-    declareInterface<api::geom::IReprojectionStereo>(this);
     LOG_DEBUG("SolARStereoReprojection constructor");
 }
 
@@ -38,7 +37,9 @@ SolARStereoReprojection::~SolARStereoReprojection()
     LOG_DEBUG("SolARStereoReprojection destructor");
 }
 
-FrameworkReturnCode SolARStereoReprojection::reprojectToUnrectification(const std::vector<SolAR::datastructure::Keypoint>& rectifiedKeypoints, const SolAR::datastructure::RectificationParameters & rectParams, std::vector<SolAR::datastructure::Keypoint>& unrectifiedKeypoints)
+FrameworkReturnCode SolARStereoReprojection::reprojectToUnrectification(const std::vector<SolAR::datastructure::Keypoint>& rectifiedKeypoints,
+                                                                        const SolAR::datastructure::RectificationParameters & rectParams,
+                                                                        std::vector<SolAR::datastructure::Keypoint>& unrectifiedKeypoints)
 {
 	Maths::Matrix3f rot = rectParams.rotation;
 	Maths::Matrix<float, 3, 4> proj = rectParams.projection;
@@ -54,11 +55,12 @@ FrameworkReturnCode SolARStereoReprojection::reprojectToUnrectification(const st
 	return FrameworkReturnCode::_SUCCESS;
 }
 
-FrameworkReturnCode SolARStereoReprojection::reprojectToCloudPoints(SRef<SolAR::datastructure::Frame> frame, const SolAR::datastructure::CamCalibration & intrinsicParams, std::vector<SRef<SolAR::datastructure::CloudPoint>>& cloudPoints)
+FrameworkReturnCode SolARStereoReprojection::reprojectToCloudPoints(const std::vector<SolAR::datastructure::Keypoint>& undistortedKeypoints,
+                                                                    const SRef<SolAR::datastructure::DescriptorBuffer> descriptors,
+                                                                    const SolAR::datastructure::Transform3Df& pose,
+                                                                    const SolAR::datastructure::CamCalibration& intrinsicParams,
+                                                                    std::vector<SRef<SolAR::datastructure::CloudPoint>>& cloudPoints)
 {
-	const std::vector<Keypoint>& undistortedKeypoints = frame->getUndistortedKeypoints();
-	const SRef<DescriptorBuffer>& descriptors = frame->getDescriptors();
-	const Transform3Df& pose = frame->getPose();
 	for (int i = 0; i < undistortedKeypoints.size(); ++i)
 		if (undistortedKeypoints[i].getDepth() > 0) {
 			std::map<uint32_t, uint32_t> visibility;

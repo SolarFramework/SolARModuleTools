@@ -82,9 +82,8 @@ public:
 	~SolARSLAMMapping() = default;
 
 	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
+	/// @param[in] camParams Camera parameters.
+	void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
 
 	/// @brief this method is used to process mapping task.
 	/// @param[in] frame: the input frame.
@@ -110,8 +109,7 @@ private:
 	int																			m_nbPassedFrameAtLeast = 5;
 	float																		m_ratioCPRefKeyframe = 0.5;
     SRef<SolAR::datastructure::Keyframe>										m_updatedReferenceKeyframe;
-    SolAR::datastructure::CamCalibration										m_camMatrix;
-    SolAR::datastructure::CamDistortion											m_camDistortion;
+    SolAR::datastructure::CameraParameters										m_camParams;
     SRef<SolAR::api::solver::map::IKeyframeSelector>							m_keyframeSelector;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;

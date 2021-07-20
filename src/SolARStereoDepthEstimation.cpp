@@ -40,7 +40,12 @@ SolARStereoDepthEstimation::~SolARStereoDepthEstimation()
 	LOG_DEBUG("SolARStereoDepthEstimation destructor");
 }
 
-FrameworkReturnCode SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keypoint>& keypoints1, std::vector<SolAR::datastructure::Keypoint>& keypoints2, const std::vector<SolAR::datastructure::DescriptorMatch>& matches, const float & focal, const float & baseline, const SolAR::datastructure::StereoType & type)
+FrameworkReturnCode SolARStereoDepthEstimation::estimate(std::vector<SolAR::datastructure::Keypoint>& rectKeypoints1,
+                                                         std::vector<SolAR::datastructure::Keypoint>& rectKeypoints2,
+                                                         const std::vector<SolAR::datastructure::DescriptorMatch>& matches,
+                                                         float focal,
+                                                         float baseline,
+                                                         SolAR::datastructure::StereoType type)
 {
 	// disparity min max
 	float dMin = focal * m_ratioFar;
@@ -49,8 +54,8 @@ FrameworkReturnCode SolARStereoDepthEstimation::estimate(std::vector<SolAR::data
 	float fb = focal * baseline;
 	// triangulation by disparity
 	for (const auto& match : matches) {
-		Keypoint& kp1 = keypoints1[match.getIndexInDescriptorA()];
-		Keypoint& kp2 = keypoints2[match.getIndexInDescriptorB()];
+        Keypoint& kp1 = rectKeypoints1[match.getIndexInDescriptorA()];
+        Keypoint& kp2 = rectKeypoints2[match.getIndexInDescriptorB()];
 		int disparity;
 		if (type == StereoType::Vertical)
 			disparity = kp2.getY() - kp1.getY();
