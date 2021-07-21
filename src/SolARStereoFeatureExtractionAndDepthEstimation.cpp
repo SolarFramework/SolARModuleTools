@@ -61,12 +61,12 @@ void SolARStereoFeatureExtractionAndDepthEstimation::setRectificationParameters(
 	m_camParams[0] = camParams1;
 	m_camParams[1] = camParams2;
 	for (int i = 0; i < 2; ++i)
-		m_undistortPoints[i]->setCameraParameters(m_camParams[0].intrinsic, m_camParams[0].distortion);
+		m_undistortPoints[i]->setCameraParameters(m_camParams[i].intrinsic, m_camParams[i].distortion);
 	m_isSetParams = true;
 	m_isPassRectify.resize(2, false);
 	// No need rectify if rectification rotation parameter is identity
 	for (int i = 0; i < 2; ++i)
-		if (!m_rectParams[i].rotation.isIdentity())
+		if (m_rectParams[i].rotation.isIdentity())
 			m_isPassRectify[i] = true;
 }
 
