@@ -34,7 +34,7 @@ SolARMapManager::SolARMapManager():ConfigurableBase(xpcf::toUUID<SolARMapManager
     declareInterface<IMapManager>(this);
     declareInjectable<IPointCloudManager>(m_pointCloudManager);
     declareInjectable<IKeyframesManager>(m_keyframesManager);
-    declareInjectable<ICovisibilityGraphManager>(m_covisibilityGraph);
+    declareInjectable<ICovisibilityGraphManager>(m_covisibilityGraphManager);
     declareInjectable<IKeyframeRetriever>(m_keyframeRetriever);	
 	declareProperty("directory", m_directory);
 	declareProperty("identificationFileName", m_identificationFileName);
@@ -55,7 +55,7 @@ xpcf::XPCFErrorCode SolARMapManager::onConfigured()
 	m_map = xpcf::utils::make_shared<datastructure::Map>();
 	m_map->setPointCloud(m_pointCloudManager->getConstPointCloud());
 	m_map->setKeyframeCollection(m_keyframesManager->getConstKeyframeCollection());
-	m_map->setCovisibilityGraph(m_covisibilityGraph->getConstCovisibilityGraph());
+	m_map->setCovisibilityGraph(m_covisibilityGraphManager->getConstCovisibilityGraph());
 	m_map->setKeyframeRetrieval(m_keyframeRetriever->getConstKeyframeRetrieval());
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
@@ -65,7 +65,7 @@ FrameworkReturnCode SolARMapManager::setMap(const SRef<Map> map)
 	m_map = map;
 	m_pointCloudManager->setPointCloud(m_map->getConstPointCloud());
 	m_keyframesManager->setKeyframeCollection(m_map->getConstKeyframeCollection());
-	m_covisibilityGraph->setCovisibilityGraph(m_map->getConstCovisibilityGraph());
+	m_covisibilityGraphManager->setCovisibilityGraph(m_map->getConstCovisibilityGraph());
 	m_keyframeRetriever->setKeyframeRetrieval(m_map->getConstKeyframeRetrieval());
 	return FrameworkReturnCode::_SUCCESS;
 }
@@ -80,7 +80,7 @@ FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> key
 {	
 	// get neighbor keyframes of the keyframe
 	std::vector<uint32_t> neighKeyframesId;
-	m_covisibilityGraph->getNeighbors(keyframe->getId(), minWeightNeighbor, neighKeyframesId);
+	m_covisibilityGraphManager->getNeighbors(keyframe->getId(), minWeightNeighbor, neighKeyframesId);
 	neighKeyframesId.push_back(keyframe->getId());
 	// get all cloud point visibilities from keyframes
 	std::map<uint32_t, std::map<uint32_t, uint32_t>> tmpIdxLocalMap;
@@ -126,7 +126,7 @@ FrameworkReturnCode SolARMapManager::addCloudPoint(const SRef<CloudPoint> cloudP
 	// update covisibility graph
 	for (int i = 0; i < keyframeIds.size() - 1; i++)
 		for (int j = i + 1; j < keyframeIds.size(); j++)
-			m_covisibilityGraph->increaseEdge(keyframeIds[i], keyframeIds[j], 1);
+			m_covisibilityGraphManager->increaseEdge(keyframeIds[i], keyframeIds[j], 1);
 	return FrameworkReturnCode::_SUCCESS;
 }
 
@@ -145,7 +145,7 @@ FrameworkReturnCode SolARMapManager::removeCloudPoint(const SRef<CloudPoint> clo
 	// update covisibility graph
 	for (int i = 0; i < keyframeIds.size() - 1; i++)
 		for (int j = i + 1; j < keyframeIds.size(); j++)
-			m_covisibilityGraph->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
+			m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
 
 	// remove cloud point
 	m_pointCloudManager->suppressPoint(cloudPoint->getId());
@@ -175,7 +175,7 @@ FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyfram
 		}
 	}
 	// remove covisibility graph
-	m_covisibilityGraph->suppressNode(keyframe->getId());
+	m_covisibilityGraphManager->suppressNode(keyframe->getId());
 	// remove keyframe retriever
 	m_keyframeRetriever->suppressKeyframe(keyframe->getId());
 	// remove keyframe
@@ -273,7 +273,7 @@ FrameworkReturnCode SolARMapManager::saveToFile() const
 		if (m_keyframesManager->saveToFile(m_directory + "/" + m_kfManagerFileName) == FrameworkReturnCode::_ERROR_)
 			return FrameworkReturnCode::_ERROR_;
 		LOG_DEBUG("Save covisibility graph");
-		if (m_covisibilityGraph->saveToFile(m_directory + "/" + m_covisGraphFileName) == FrameworkReturnCode::_ERROR_)
+		if (m_covisibilityGraphManager->saveToFile(m_directory + "/" + m_covisGraphFileName) == FrameworkReturnCode::_ERROR_)
 			return FrameworkReturnCode::_ERROR_;
 		LOG_DEBUG("Save keyframe retriever");
 		if (m_keyframeRetriever->saveToFile(m_directory + "/" + m_kfRetrieverFileName) == FrameworkReturnCode::_ERROR_)
@@ -326,12 +326,12 @@ FrameworkReturnCode SolARMapManager::loadFromFile()
     }
 	m_map->setKeyframeCollection(m_keyframesManager->getConstKeyframeCollection());
 	LOG_DEBUG("Load covisibility graph");
-	if (m_covisibilityGraph->loadFromFile(m_directory + "/" + m_covisGraphFileName) == FrameworkReturnCode::_ERROR_)
+	if (m_covisibilityGraphManager->loadFromFile(m_directory + "/" + m_covisGraphFileName) == FrameworkReturnCode::_ERROR_)
     {
         LOG_WARNING("Cannot load map covisibility graph file with url: {}", m_directory + "/" + m_covisGraphFileName);
 		return FrameworkReturnCode::_ERROR_;
     }
-	m_map->setCovisibilityGraph(m_covisibilityGraph->getConstCovisibilityGraph());
+	m_map->setCovisibilityGraph(m_covisibilityGraphManager->getConstCovisibilityGraph());
 	LOG_DEBUG("Load keyframe retriever");
 	if (m_keyframeRetriever->loadFromFile(m_directory + "/" + m_kfRetrieverFileName) == FrameworkReturnCode::_ERROR_)
     {
