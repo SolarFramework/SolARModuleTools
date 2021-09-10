@@ -1,12 +1,16 @@
+## remove Qt dependencies
+QT       -= core gui
+CONFIG -= qt
+
+QMAKE_PROJECT_DEPTH = 0
+
+## global defintions : target lib name, version
 TARGET = SolARTest_ModuleTools_DualMapperSingleton
 VERSION=0.10.0
 
+DEFINES += MYVERSION=$${VERSION}
 CONFIG += c++1z
 CONFIG += console
-CONFIG -= qt
-
-DEFINES += MYVERSION=$${VERSION}
-DEFINES += WITHREMOTING
 
 include(findremakenrules.pri)
 
