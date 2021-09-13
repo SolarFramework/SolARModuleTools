@@ -39,6 +39,10 @@
 #include "SolAROverlapDetector.h"
 #include "SolARSLAMMapping.h"
 #include "SolARMapUpdate.h"
+#include "SolARStereoDepthEstimation.h"
+#include "SolARStereoFeatureExtractionAndDepthEstimation.h"
+#include "SolARStereoBootstrapper.h"
+#include "SolARStereoReprojection.h"
 #include <iostream>
 
 namespace xpcf=org::bcom::xpcf;
@@ -149,6 +153,22 @@ extern "C" XPCF_MODULEHOOKS_API xpcf::XPCFErrorCode XPCF_getComponent(const boos
 	{
 		errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARMapUpdate>(componentUUID, interfaceRef);
 	}
+	if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+	{
+		errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARStereoDepthEstimation>(componentUUID, interfaceRef);
+	}
+	if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+	{
+		errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARStereoFeatureExtractionAndDepthEstimation>(componentUUID, interfaceRef);
+	}
+	if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+	{
+        errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARStereoBootstrapper>(componentUUID, interfaceRef);
+	}
+    if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+    {
+        errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARStereoReprojection>(componentUUID, interfaceRef);
+    }
     return errCode;
 }
 
@@ -180,6 +200,10 @@ XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARSLAMTracking)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARSLAMMapping)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolAROverlapDetector)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARMapUpdate)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoDepthEstimation)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoFeatureExtractionAndDepthEstimation)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoBootstrapper)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoReprojection)
 
 XPCF_END_COMPONENTS_DECLARATION
 

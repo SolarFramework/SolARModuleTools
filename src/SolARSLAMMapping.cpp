@@ -39,11 +39,10 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
 	declareInjectable<api::solver::map::IBundler>(m_bundler);
 	declareInjectable<api::reloc::IKeyframeRetriever>(m_keyframeRetriever);
-	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
 	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
 	declareInjectable<api::geom::IProject>(m_projector);
-	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
+	declareInjectable<api::features::IDescriptorMatcherGeometric>(m_matcher);
 	declareInjectable<api::solver::pose::I2D3DCorrespondencesFinder>(m_corr2D3DFinder);
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("maxNbNeighborKfs", m_maxNbNeighborKfs);
@@ -54,11 +53,10 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	LOG_DEBUG("SolARSLAMMapping constructor");
 }
 
-void SolARSLAMMapping::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_triangulator->setCameraParameters(m_camMatrix, m_camDistortion);
-    m_projector->setCameraParameters(m_camMatrix, m_camDistortion);
+void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
+	m_camParams = camParams;
+	m_triangulator->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
+    m_projector->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
 }
 
 FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyframe> & keyframe)
@@ -145,8 +143,7 @@ bool SolARSLAMMapping::checkNeedNewKeyframeInLocalMap(const SRef<Frame>& frame)
 				return true;
 			// Check find enough matches to best ret keyframe
 			std::vector<DescriptorMatch> matches;
-			m_matcher->match(bestRetKeyframe->getDescriptors(), frame->getDescriptors(), matches);
-			m_matchesFilter->filter(matches, matches, bestRetKeyframe->getKeypoints(), frame->getKeypoints());			
+			m_matcher->match(bestRetKeyframe, frame, m_camParams, matches);		
 			std::vector<Point2Df> pts2d;
 			std::vector<Point3Df> pts3d;
 			std::vector < std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
@@ -199,11 +196,11 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 {
 	const std::map<unsigned int, unsigned int> &newKf_mapVisibility = keyframe->getVisibility();
 	const SRef<DescriptorBuffer> &newKf_des = keyframe->getDescriptors();
-	const std::vector<Keypoint> & newKf_kp = keyframe->getKeypoints();
+	const std::vector<Keypoint> & newKf_kpUn = keyframe->getUndistortedKeypoints();
 	const Transform3Df& newKf_pose = keyframe->getPose();
 
 	// Vector indices keypoints have no visibility to map point
-	std::vector<bool> checkMatches(newKf_kp.size(), false);
+	std::vector<bool> checkMatches(newKf_kpUn.size(), false);
 	for (const auto& it: newKf_mapVisibility)
 		checkMatches[it.first] = true;
 
@@ -232,20 +229,17 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 			std::sort(depths.begin(), depths.end());
 			tmpKfMedDepth = depths[depths.size() / 2];
 		}
-		// check base line
-        if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
-			continue;
+		
 		// get keypoints don't have associated cloud points
-		std::vector<int> newKf_indexKeypoints;
+		std::vector<uint32_t> newKf_indexKeypoints;
 		for (int j = 0; j < checkMatches.size(); ++j)
 			if (!checkMatches[j])
 				newKf_indexKeypoints.push_back(j);
 
-		// Matching based on BoW
+		// Feature matching based on epipolar constraint
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
-		m_keyframeRetriever->match(newKf_indexKeypoints, newKf_des, tmpKf, tmpMatches);
-		// matches filter based homography matrix
-		m_matchesFilter->filter(tmpMatches, tmpMatches, newKf_kp, tmpKf->getKeypoints());
+		m_matcher->match(keyframe, tmpKf, m_camParams, tmpMatches, newKf_indexKeypoints);
+
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {
 			unsigned int idx_newKf = tmpMatches[j].getIndexInDescriptorA();
@@ -254,15 +248,22 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 				goodMatches.push_back(tmpMatches[j]);
 			}
 		}
+		if (goodMatches.size() == 0)
+			continue;
 		
-		// triangulation
-		std::vector<SRef<CloudPoint>> tmpCloudPoint, tmpFilteredCloudPoint;
-		std::vector<int> indexFiltered;
-		if (goodMatches.size() > 0)
-			m_triangulator->triangulate(newKf_kp, tmpKf->getKeypoints(), newKf_des, tmpKf->getDescriptors(), goodMatches,
-				std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), newKf_pose, tmpKf_pose, tmpCloudPoint);
+		// triangulation		
+		// check baseline: if baseline is very short, 3D points are defined by using only depth information of keypoints 
+		std::vector<SRef<CloudPoint>> tmpCloudPoint;
+		if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
+			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, true);
+		else
+			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, false);
+		if (tmpCloudPoint.size() == 0)
+			continue;
 
 		// filter cloud points
+		std::vector<SRef<CloudPoint>> tmpFilteredCloudPoint;
+		std::vector<int> indexFiltered;
 		if (tmpCloudPoint.size() > 0)
 			m_mapFilter->filter(newKf_pose, tmpKf_pose, tmpCloudPoint, tmpFilteredCloudPoint, indexFiltered);
 		for (int i = 0; i < indexFiltered.size(); ++i) {

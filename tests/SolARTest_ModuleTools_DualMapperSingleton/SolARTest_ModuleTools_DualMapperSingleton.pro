@@ -1,12 +1,16 @@
-TARGET = SolARTest_ModuleTools_DualMapperSingleton
-VERSION=0.9.3
-
-CONFIG += c++1z
-CONFIG += console
+## remove Qt dependencies
+QT       -= core gui
 CONFIG -= qt
 
+QMAKE_PROJECT_DEPTH = 0
+
+## global defintions : target lib name, version
+TARGET = SolARTest_ModuleTools_DualMapperSingleton
+VERSION=0.10.0
+
 DEFINES += MYVERSION=$${VERSION}
-DEFINES += WITHREMOTING
+CONFIG += c++1z
+CONFIG += console
 
 include(findremakenrules.pri)
 
@@ -67,6 +71,18 @@ win32 {
 
 android {
     ANDROID_ABIS="arm64-v8a"
+}
+
+linux {
+  run_install.path = $${TARGETDEPLOYDIR}
+  run_install.files = $${PWD}/../run.sh
+  CONFIG(release,debug|release) {
+    run_install.extra = cp $$files($${PWD}/../runRelease.sh) $${PWD}/../run.sh
+  }
+  CONFIG(debug,debug|release) {
+    run_install.extra = cp $$files($${PWD}/../runDebug.sh) $${PWD}/../run.sh
+  }
+  INSTALLS += run_install
 }
 
 configfile.path = $${TARGETDEPLOYDIR}/

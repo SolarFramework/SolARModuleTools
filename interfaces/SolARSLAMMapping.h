@@ -18,16 +18,16 @@
 #define SOLARSLAMMAPPING_H
 #include "api/slam/IMapping.h"
 #include "api/storage/IMapManager.h"
+#include "api/solver/map/IKeyframeSelector.h"
 #include "api/storage/ICovisibilityGraphManager.h"
 #include "api/storage/IKeyframesManager.h"
 #include "api/storage/IPointCloudManager.h"
 #include "api/solver/map/IBundler.h"
 #include "api/reloc/IKeyframeRetriever.h"
-#include "api/features/IMatchesFilter.h"
 #include "api/solver/map/ITriangulator.h"
 #include "api/solver/map/IMapFilter.h"
 #include "api/geom/IProject.h"
-#include "api/features/IDescriptorMatcher.h"
+#include "api/features/IDescriptorMatcherGeometric.h"
 #include "api/solver/pose/I2D3DCorrespondencesFinder.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
@@ -46,13 +46,13 @@ namespace TOOLS {
 * @SolARComponentInjectable{SolAR::api::storage::IPointCloudManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraphManager}
+* @SolARComponentInjectable{SolAR::api::solver::map::IKeyframeSelector}
 * @SolARComponentInjectable{SolAR::api::solver::map::IBundler}
 * @SolARComponentInjectable{SolAR::api::reloc::IKeyframeRetriever}
-* @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
 * @SolARComponentInjectable{SolAR::solver::map::IMapFilter}
 * @SolARComponentInjectable{SolAR::api::geom::IProject}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherGeometric}
 * @SolARComponentInjectable{SolAR::api::solver::pose::I2D3DCorrespondencesFinder}
 * @SolARComponentInjectablesEnd
 *
@@ -82,9 +82,8 @@ public:
 	~SolARSLAMMapping() = default;
 
 	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
+	/// @param[in] camParams Camera parameters.
+	void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
 
 	/// @brief this method is used to process mapping task.
 	/// @param[in] frame: the input frame.
@@ -110,19 +109,18 @@ private:
 	int																			m_nbPassedFrameAtLeast = 5;
 	float																		m_ratioCPRefKeyframe = 0.5;
     SRef<SolAR::datastructure::Keyframe>										m_updatedReferenceKeyframe;
-    SolAR::datastructure::CamCalibration										m_camMatrix;
-    SolAR::datastructure::CamDistortion											m_camDistortion;
+    SolAR::datastructure::CameraParameters										m_camParams;
+    SRef<SolAR::api::solver::map::IKeyframeSelector>							m_keyframeSelector;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;
     SRef<SolAR::api::solver::map::IBundler>										m_bundler;
     SRef<SolAR::api::reloc::IKeyframeRetriever>									m_keyframeRetriever;
     SRef<SolAR::api::storage::IMapManager>                                      m_mapManager;
     SRef<SolAR::api::storage::IPointCloudManager>								m_pointCloudManager;
-    SRef<SolAR::api::features::IMatchesFilter>									m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>								m_triangulator;
     SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilter;
     SRef<SolAR::api::geom::IProject>											m_projector;
-    SRef<SolAR::api::features::IDescriptorMatcher>								m_matcher;
+    SRef<SolAR::api::features::IDescriptorMatcherGeometric>						m_matcher;
     SRef<SolAR::api::solver::pose::I2D3DCorrespondencesFinder>					m_corr2D3DFinder;
 	std::map<uint32_t, std::pair<SRef<SolAR::datastructure::CloudPoint>, uint32_t>>	m_recentAddedCloudPoints;
 };

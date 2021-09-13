@@ -2,9 +2,11 @@
 QT       -= core gui
 CONFIG -= qt
 
+QMAKE_PROJECT_DEPTH = 0
+
 ## global defintions : target lib name, version
 TARGET = SolARTest_ModuleTools_3DTransformEstimationSACFrom3D3D
-VERSION=0.9.3
+VERSION=0.10.0
 
 DEFINES += MYVERSION=$${VERSION}
 CONFIG += c++1z
@@ -70,13 +72,21 @@ android {
     ANDROID_ABIS="arm64-v8a"
 }
 
+linux {
+  run_install.path = $${TARGETDEPLOYDIR}
+  run_install.files = $${PWD}/../run.sh
+  CONFIG(release,debug|release) {
+    run_install.extra = cp $$files($${PWD}/../runRelease.sh) $${PWD}/../run.sh
+  }
+  CONFIG(debug,debug|release) {
+    run_install.extra = cp $$files($${PWD}/../runDebug.sh) $${PWD}/../run.sh
+  }
+  INSTALLS += run_install
+}
+
 configfile.path = $${TARGETDEPLOYDIR}/
 configfile.files = $${PWD}/SolARTest_ModuleTools_3DTransformEstimationSACFrom3D3D_conf.xml
 INSTALLS += configfile
-
-DISTFILES += \
-    SolARTest_ModuleTools_3DTransformEstimationSACFrom3D3D_conf.xml \
-    packagedependencies.txt
 
 #NOTE : Must be placed at the end of the .pro
 include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/remaken_install_target.pri)))) # Shell_quote & shell_path required for visual on windows

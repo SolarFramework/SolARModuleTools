@@ -36,6 +36,7 @@ SolARSLAMTracking::SolARSLAMTracking() :ConfigurableBase(xpcf::toUUID<SolARSLAMT
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
 	declareInjectable<api::storage::IKeyframesManager>(m_keyframesManager);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
+	declareInjectable<api::features::IDescriptorMatcherRegion>(m_matcherRegion);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::pose::I2D3DCorrespondencesFinder>(m_corr2D3DFinder);
 	declareInjectable<api::solver::pose::I3DTransformFinderFrom2D3D>(m_pnp);
@@ -201,7 +202,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 				desAllLocalMapUnseen.push_back(it_cp->getDescriptor());
 			}
 			std::vector<DescriptorMatch> allMatches;
-			m_matcher->matchInRegion(projected2DPtsCandidates, desAllLocalMapUnseen, frame, allMatches, 0, maxMatchDistance);
+			m_matcherRegion->match(projected2DPtsCandidates, desAllLocalMapUnseen, frame, allMatches, 0, maxMatchDistance);
 			// find visibility of new frame
 			int nbMatchesLocalMap(0);
 			for (auto &it_match : allMatches) {
