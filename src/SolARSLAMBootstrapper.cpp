@@ -85,7 +85,7 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 		// matching
 		std::vector<DescriptorMatch> matches;
 		m_matcher->match(m_keyframe1->getDescriptors(), frame->getDescriptors(), matches);
-		m_matchesFilter->filter(matches, matches, m_keyframe1->getKeypoints(), frame->getKeypoints());
+        m_matchesFilter->filter(matches, matches, m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
 		if (matches.size() > 0) {
             m_matchesOverlay->draw(frame->getView(), view, m_keyframe1->getKeypoints(), frame->getKeypoints(), matches);
 		}
@@ -96,14 +96,14 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 			// Find pose of the second keyframe if not has pose
 			if (!m_hasPose) {
 				Transform3Df pose;
-				m_poseFinderFrom2D2D->estimate(m_keyframe1->getKeypoints(), frame->getKeypoints(), m_keyframe1->getPose(), pose, matches);				
+                m_poseFinderFrom2D2D->estimate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getPose(), pose, matches);
 				frame->setPose(pose);
 			}
 			if (angleCamDistance(m_keyframe1->getPose(), frame->getPose()) > m_angleThres)
 				return FrameworkReturnCode::_ERROR_;
 			// Triangulate
 			std::vector<SRef<CloudPoint>> cloud, filteredCloud;
-			m_triangulator->triangulate(m_keyframe1->getKeypoints(), frame->getKeypoints(), m_keyframe1->getDescriptors(), frame->getDescriptors(), matches,
+            m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getDescriptors(), frame->getDescriptors(), matches,
 				std::make_pair(0, 1), m_keyframe1->getPose(), frame->getPose(), cloud);
 			// Filter cloud points
 			m_mapFilter->filter(m_keyframe1->getPose(), frame->getPose(), cloud, filteredCloud);
