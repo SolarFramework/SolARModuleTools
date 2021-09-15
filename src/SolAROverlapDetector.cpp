@@ -97,7 +97,7 @@ FrameworkReturnCode SolAROverlapDetector::detect(const SRef<datastructure::Map> 
 			std::vector<SRef<CloudPoint>> floatingCloudPoints, globalCloudPoints;
 			std::vector<uint32_t>floatingCloudPointsIndices, globalCloudPointsIndices;
 			m_matcher->match(queryKeyframe->getDescriptors(), it->getDescriptors(), matches);
-			m_matchesFilter->filter(matches, matches, queryKeyframe->getKeypoints(), it->getKeypoints());
+			m_matchesFilter->filter(matches, matches, queryKeyframe->getUndistortedKeypoints(), it->getUndistortedKeypoints());
 			m_corr3D3DFinder->find(queryKeyframe, it, matches, floatingCloudPointsIndices, globalCloudPointsIndices, foundMatches);
 
 			floatingPointCloudData->getPoints(floatingCloudPointsIndices, floatingCloudPoints);

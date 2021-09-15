@@ -119,7 +119,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	m_matcher->match(m_referenceKeyframe->getDescriptors(), frame->getDescriptors(), matches);
 	if (matches.size() < 10)
 		return FrameworkReturnCode::_ERROR_;
-	m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getKeypoints(), frame->getKeypoints());
+    m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
 	float maxMatchDistance = -FLT_MAX;
 	for (const auto &it : matches)
 		maxMatchDistance = std::max(maxMatchDistance, it.getMatchingScore());

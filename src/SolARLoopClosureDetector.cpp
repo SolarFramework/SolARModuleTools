@@ -87,7 +87,7 @@ FrameworkReturnCode SolARLoopClosureDetector::detect(const SRef<Keyframe> queryK
 		std::vector<DescriptorMatch> matches, foundMatches, remainingMatches;
 		std::vector<SRef<CloudPoint>> firstCloudPoints, secondCloudPoints;
 		m_matcher->match(queryKeyframe->getDescriptors(), it->getDescriptors(), matches);
-		m_matchesFilter->filter(matches, matches, queryKeyframe->getKeypoints(), it->getKeypoints());
+		m_matchesFilter->filter(matches, matches, queryKeyframe->getUndistortedKeypoints(), it->getUndistortedKeypoints());
 		m_corr3D3DFinder->find(queryKeyframe, it, matches, firstCloudPoints, secondCloudPoints, foundMatches, remainingMatches);
 		std::vector<Point3Df> pts1, pts2;
 		pts1.resize(firstCloudPoints.size());
