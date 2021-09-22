@@ -108,6 +108,7 @@ private:
 	int																			m_nbVisibilityAtLeast = 30;
 	int																			m_nbPassedFrameAtLeast = 5;
 	float																		m_ratioCPRefKeyframe = 0.5;
+	int																			m_isSaveImage = 0;
     SRef<SolAR::datastructure::Keyframe>										m_updatedReferenceKeyframe;
     SolAR::datastructure::CameraParameters										m_camParams;
     SRef<SolAR::api::solver::map::IKeyframeSelector>							m_keyframeSelector;

@@ -50,6 +50,7 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareProperty("nbVisibilityAtLeast", m_nbVisibilityAtLeast);
 	declareProperty("nbPassedFrameAtLeast", m_nbPassedFrameAtLeast);
 	declareProperty("ratioCPRefKeyframe", m_ratioCPRefKeyframe);
+	declareProperty("saveImae", m_isSaveImage);
 	LOG_DEBUG("SolARSLAMMapping constructor");
 }
 
@@ -98,10 +99,12 @@ FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyf
 SRef<Keyframe> SolARSLAMMapping::processNewKeyframe(const SRef<Frame>& frame)
 {
 	// create a new keyframe from the current frame
+	if (!m_isSaveImage)
+		frame->setView(nullptr);
 	SRef<Keyframe> newKeyframe = xpcf::utils::make_shared<Keyframe>(frame);
 	// Add to keyframe manager
 	m_keyframesManager->addKeyframe(newKeyframe);
-	// Add to BOW retrieval			
+	// Add to BOW retrieval
 	m_keyframeRetriever->addKeyframe(newKeyframe);
 	// Update keypoint visibility, descriptor in cloud point and connections between new keyframe with other keyframes
 	updateAssociateCloudPoint(newKeyframe);

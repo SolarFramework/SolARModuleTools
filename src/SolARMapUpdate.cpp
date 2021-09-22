@@ -47,9 +47,10 @@ xpcf::XPCFErrorCode SolARMapUpdate::onConfigured()
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
-void SolARMapUpdate::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) 
+void SolARMapUpdate::setCameraParameters(const SolAR::datastructure::CameraParameters & camParams)
 {
-	m_projector->setCameraParameters(intrinsicParams, distortionParams);
+    m_camParams = camParams;
+    m_projector->setCameraParameters(camParams.intrinsic, camParams.distortion);
 }
 
 float SolARMapUpdate::cosineViewDirectionAngle(const SRef<Frame>& frame, const SRef<CloudPoint>& cloudPoint)
@@ -117,8 +118,8 @@ FrameworkReturnCode SolARMapUpdate::update(SRef<datastructure::Map> globalMap, c
 
 void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& localCloudPoints, SRef<Keyframe> newKeyframe, std::vector<SRef<CloudPoint>>& notMatchedCloudPoints)
 {
-	uint32_t imgWidth = newKeyframe->getView()->getWidth();
-	uint32_t imgHeight = newKeyframe->getView()->getHeight();
+    uint32_t imgWidth = m_camParams.resolution.width;
+    uint32_t imgHeight = m_camParams.resolution.height;
 	const std::map<uint32_t, uint32_t>& keyframeVisibilities = newKeyframe->getVisibility();
 	std::set<uint32_t> seenCPIds;
 	for (const auto& it : keyframeVisibilities)
@@ -173,8 +174,8 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 {
 	if (notMatchedCloudPoints.size() == 0)
 		return;
-	uint32_t imgWidth = newKeyframe->getView()->getWidth();
-	uint32_t imgHeight = newKeyframe->getView()->getHeight();
+    uint32_t imgWidth = m_camParams.resolution.width;
+    uint32_t imgHeight = m_camParams.resolution.height;
 	float updateWindows = RATIO_UPDATE_WINDOWS * imgWidth;
 	float borderImage = RATIO_BORDER_IMAGE * imgWidth;
 	std::vector<Point2Df> pts2dInliers;
