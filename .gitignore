@@ -61,6 +61,7 @@ Release/
 *-Release*
 *_Debug*
 *_Release*
+*run.sh
 
 # Executables
 *.exe
