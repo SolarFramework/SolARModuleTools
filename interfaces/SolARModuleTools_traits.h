@@ -58,6 +58,7 @@ class SolARStereoDepthEstimation;
 class SolARStereoFeatureExtractionAndDepthEstimation;
 class SolARStereoBootstrapper;
 class SolARStereoReprojection;
+class SolARWorldGraphLoader;
 
 }
 }
@@ -212,6 +213,10 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoReprojection,
                             "6f0c5373-1b00-41ce-ab1b-a845b83f65b3",
                             "SolARStereoReprojection",
                             "Reproject keypoints with estimating depth to 3D cloud points.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARWorldGraphLoader,
+                            "8ee6aa50-f6bb-4b01-a1fe-727b54ed0457",
+                            "SolARWorldGraphLoader",
+                            "Loads a world graph of trackables.")
 							
 
 #endif // SOLARMODULETOOLS_TRAITS_H

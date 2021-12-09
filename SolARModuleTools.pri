@@ -30,6 +30,7 @@ interfaces/SolARStereoDepthEstimation.h \
 interfaces/SolARStereoReprojection.h \
 interfaces/SolARStereoFeatureExtractionAndDepthEstimation.h \
 interfaces/SolARStereoBootstrapper.h \
+interfaces/SolARWorldGraphLoader.h
 
 
 SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
@@ -62,4 +63,5 @@ SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
     src/SolARStereoDepthEstimation.cpp \
     src/SolARStereoReprojection.cpp \
     src/SolARStereoFeatureExtractionAndDepthEstimation.cpp \
-    src/SolARStereoBootstrapper.cpp
+    src/SolARStereoBootstrapper.cpp \
+    src/SolARWorldGraphLoader.cpp
