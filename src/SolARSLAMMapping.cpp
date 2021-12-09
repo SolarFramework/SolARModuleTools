@@ -50,7 +50,7 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareProperty("nbVisibilityAtLeast", m_nbVisibilityAtLeast);
 	declareProperty("nbPassedFrameAtLeast", m_nbPassedFrameAtLeast);
 	declareProperty("ratioCPRefKeyframe", m_ratioCPRefKeyframe);
-	declareProperty("saveImae", m_isSaveImage);
+	declareProperty("saveImage", m_isSaveImage);
 	LOG_DEBUG("SolARSLAMMapping constructor");
 }
 
