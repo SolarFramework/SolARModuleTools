@@ -21,6 +21,7 @@ interfaces/SolARLoopClosureDetector.h \
 interfaces/SolAR3D3DcorrespondencesFinder.h \
 interfaces/SolAR3DTransformEstimationSACFrom3D3D.h \
 interfaces/SolARFiducialMarkerPoseEstimator.h \
+interfaces/SolARMultiFiducialMarkersPoseEstimator.h \
 interfaces/SolARSLAMBootstrapper.h \
 interfaces/SolARSLAMTracking.h \
 interfaces/SolARSLAMMapping.h \
@@ -55,6 +56,7 @@ SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
     src/SolAR3D3DcorrespondencesFinder.cpp \
     src/SolAR3DTransformEstimationSACFrom3D3D.cpp \
     src/SolARFiducialMarkerPoseEstimator.cpp \
+    src/SolARMultiFiducialMarkersPoseEstimator.cpp \
     src/SolARSLAMBootstrapper.cpp \
     src/SolARSLAMTracking.cpp \
     src/SolARSLAMMapping.cpp \

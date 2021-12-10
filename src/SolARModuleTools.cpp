@@ -44,6 +44,7 @@
 #include "SolARStereoBootstrapper.h"
 #include "SolARStereoReprojection.h"
 #include "SolARWorldGraphLoader.h"
+#include "SolARMultiFiducialMarkersPoseEstimator.h"
 #include <iostream>
 
 namespace xpcf=org::bcom::xpcf;
@@ -174,6 +175,10 @@ extern "C" XPCF_MODULEHOOKS_API xpcf::XPCFErrorCode XPCF_getComponent(const boos
     {
         errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARWorldGraphLoader>(componentUUID, interfaceRef);
     }
+    if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+    {
+        errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARMultiFiducialMarkersPoseEstimator>(componentUUID, interfaceRef);
+    }
     return errCode;
 }
 
@@ -210,6 +215,7 @@ XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoFeatureExtractionAndDepthEs
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoBootstrapper)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARStereoReprojection)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARWorldGraphLoader)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARMultiFiducialMarkersPoseEstimator)
 
 XPCF_END_COMPONENTS_DECLARATION
 
