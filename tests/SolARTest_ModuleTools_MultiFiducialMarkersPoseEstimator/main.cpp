@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     auto viewer = xpcfComponentManager->resolve<SolAR::api::display::IImageViewer>();    
     auto poseEstimator = xpcfComponentManager->resolve<SolAR::api::solver::pose::IMultiTrackablesPose>();
 	auto worldGraphLoader = xpcfComponentManager->resolve<SolAR::api::input::files::IWorldGraphLoader>();
-	std::cout << "OK\n";
+
 	// load trackables of the world graph
 	std::vector<SRef<Trackable>> trackables;
 	if (worldGraphLoader->load(trackables) == FrameworkReturnCode::_ERROR_) {
