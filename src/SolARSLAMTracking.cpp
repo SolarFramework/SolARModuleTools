@@ -35,6 +35,7 @@ SolARSLAMTracking::SolARSLAMTracking() :ConfigurableBase(xpcf::toUUID<SolARSLAMT
 	addInterface<api::slam::ITracking>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
 	declareInjectable<api::storage::IKeyframesManager>(m_keyframesManager);
+	declareInjectable<api::storage::IPointCloudManager>(m_pointCloudManager);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IDescriptorMatcherRegion>(m_matcherRegion);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
@@ -231,9 +232,36 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		m_pnp->estimate(pts2dInliers, pts3dInliers, refinedPose, frame->getPose());
 		frame->setPose(refinedPose);
 	}
-
 	LOG_DEBUG("Refined pose: \n {}", frame->getPose().matrix());
-	m_lastPose = frame->getPose();	
+	m_lastPose = frame->getPose();
+
+	// compute number of shared cloud points between current frame and each keyframe
+	std::map<uint32_t, int> kfCounterVis;
+	for (const auto &it : newMapVisibility) {
+		SRef<CloudPoint> cloudPoint;
+		if (m_pointCloudManager->getPoint(it.second, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
+			const std::map<uint32_t, uint32_t> &cpKfVisibility = cloudPoint->getVisibility();
+			for (auto const &it_kf : cpKfVisibility)
+				kfCounterVis[it_kf.first]++;			
+		}
+	}
+	// find the keyframe that shares the most points
+	uint32_t idBestKf = m_referenceKeyframe->getId();
+	int nbMaxPts = kfCounterVis[idBestKf];	
+	for (const auto &it: kfCounterVis)
+		if (it.second > nbMaxPts) {
+			nbMaxPts = it.second;
+			idBestKf = it.first;
+		}
+	// update the reference keyframe
+	SRef<Keyframe> newRefKf;
+	if ((idBestKf != m_referenceKeyframe->getId()) && 
+		(m_keyframesManager->getKeyframe(idBestKf, newRefKf) == FrameworkReturnCode::_SUCCESS)) {
+		LOG_DEBUG("Update new reference keyframe from {} to {}", m_referenceKeyframe->getId(), idBestKf);
+		frame->setReferenceKeyframe(newRefKf);
+		updateReferenceKeyframe(newRefKf);
+	}
+		
 	// define invalid cloud points
 	std::vector<Point2Df> localPtsInvalid;
 	{		

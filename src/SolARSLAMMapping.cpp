@@ -37,13 +37,10 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::storage::IPointCloudManager>(m_pointCloudManager);
 	declareInjectable<api::storage::IKeyframesManager>(m_keyframesManager);
 	declareInjectable<api::storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
-	declareInjectable<api::solver::map::IBundler>(m_bundler);
 	declareInjectable<api::reloc::IKeyframeRetriever>(m_keyframeRetriever);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
 	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
-	declareInjectable<api::geom::IProject>(m_projector);
 	declareInjectable<api::features::IDescriptorMatcherGeometric>(m_matcher);
-	declareInjectable<api::solver::pose::I2D3DCorrespondencesFinder>(m_corr2D3DFinder);
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("maxNbNeighborKfs", m_maxNbNeighborKfs);
 	declareProperty("minTrackedPoints", m_minTrackedPoints);
@@ -57,7 +54,6 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
 	m_camParams = camParams;
 	m_triangulator->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
-    m_projector->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
 }
 
 FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyframe> & keyframe)
@@ -82,16 +78,10 @@ FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyf
     if ((m_nbPassedFrames > m_nbPassedFrameAtLeast) && (frame->getVisibility().size() > m_nbVisibilityAtLeast) && 
 		((nbCommonCP < m_ratioCPRefKeyframe * frame->getReferenceKeyframe()->getVisibility().size()) || (frame->getVisibility().size() < m_minTrackedPoints)))
 	{
-		if (!checkNeedNewKeyframeInLocalMap(frame)) {
-			keyframe = m_updatedReferenceKeyframe;
-			return FrameworkReturnCode::_ERROR_;
-		}
-		else {
-			// create new keyframe
-			keyframe = processNewKeyframe(frame);
-			m_nbPassedFrames = 0;
-			return FrameworkReturnCode::_SUCCESS;
-		}
+		// create new keyframe
+		keyframe = processNewKeyframe(frame);
+		m_nbPassedFrames = 0;
+		return FrameworkReturnCode::_SUCCESS;
 	}
 	return FrameworkReturnCode::_ERROR_;
 }
@@ -128,43 +118,6 @@ SRef<Keyframe> SolARSLAMMapping::processNewKeyframe(const SRef<Frame>& frame)
 		m_recentAddedCloudPoints[point->getId()] = std::make_pair(point, newKeyframe->getId());
 	}
 	return newKeyframe;
-}
-
-bool SolARSLAMMapping::checkNeedNewKeyframeInLocalMap(const SRef<Frame>& frame)
-{
-	std::vector < uint32_t> ret_keyframesId, neighborsKfs;
-	const SRef<Keyframe> &referenceKeyframe = frame->getReferenceKeyframe();
-	m_covisibilityGraphManager->getNeighbors(referenceKeyframe->getId(), m_minWeightNeighbor, neighborsKfs);
-	neighborsKfs.push_back(referenceKeyframe->getId());
-	std::set<uint32_t> candidates;
-	for (const auto &it : neighborsKfs)
-		candidates.insert(it);
-	if (m_keyframeRetriever->retrieve(frame, candidates, ret_keyframesId) == FrameworkReturnCode::_SUCCESS) {
-		if (ret_keyframesId[0] != referenceKeyframe->getId()) {
-			SRef<Keyframe> bestRetKeyframe;
-			if (m_keyframesManager->getKeyframe(ret_keyframesId[0], bestRetKeyframe) != FrameworkReturnCode::_SUCCESS)
-				return true;
-			// Check find enough matches to best ret keyframe
-			std::vector<DescriptorMatch> matches;
-			m_matcher->match(bestRetKeyframe, frame, m_camParams, matches);		
-			std::vector<Point2Df> pts2d;
-			std::vector<Point3Df> pts3d;
-			std::vector < std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
-			std::vector<DescriptorMatch> foundMatches;
-			std::vector<DescriptorMatch> remainingMatches;
-			m_corr2D3DFinder->find(bestRetKeyframe, frame, matches, pts3d, pts2d, corres2D3D, foundMatches, remainingMatches);
-			if (corres2D3D.size() >= m_minTrackedPoints) {
-				m_updatedReferenceKeyframe = bestRetKeyframe;
-				LOG_DEBUG("Update new reference keyframe with id {}", m_updatedReferenceKeyframe->getId());
-				return false;
-			}						
-		}
-		else {
-			LOG_DEBUG("Find same reference keyframe with id {}", referenceKeyframe->getId());
-		}		
-	}
-	LOG_DEBUG("Need to make new keyframe");
-	return true;
 }
 
 void SolARSLAMMapping::updateAssociateCloudPoint(const SRef<Keyframe>& keyframe)

@@ -127,6 +127,7 @@ private:
     SRef<SolAR::api::geom::IProject>                                m_projector;
     SRef<SolAR::api::reloc::IKeyframeRetriever>                     m_keyframeRetriever;
     SRef<SolAR::api::storage::IKeyframesManager>                    m_keyframesManager;
+    SRef<SolAR::api::storage::IPointCloudManager>                   m_pointCloudManager;
 };
 
 }
