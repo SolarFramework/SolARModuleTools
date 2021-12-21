@@ -168,10 +168,11 @@ FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyfram
 	for (auto const &v : keyframeVisibility) {
 		SRef<CloudPoint> point;
 		if (m_pointCloudManager->getPoint(v.second, point) == FrameworkReturnCode::_SUCCESS) {
-			point->removeVisibility(keyframe->getId());
 			// remove this cloud point if the number of visibilities is less than 2
-			if (point->getVisibility().size() < 2)
+			if (point->getVisibility().size() <= 2)
 				m_pointCloudManager->suppressPoint(point->getId());
+			else
+				point->removeVisibility(keyframe->getId());							
 		}
 	}
 	// remove covisibility graph
@@ -221,20 +222,15 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 			continue;
 		const std::map<uint32_t, uint32_t>& pcVisibility = itKf->getVisibility();
 		int nbRedundantObs(0);
-		bool isPCTwoViews(true);
 		for (const auto &itPC : pcVisibility) {
 			uint32_t idxPC = itPC.second;
 			SRef<CloudPoint> cloudPoint;
 			if (m_pointCloudManager->getPoint(idxPC, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
-				if (cloudPoint->getVisibility().size() >= 5)
+				if (cloudPoint->getVisibility().size() >= 4)
 					nbRedundantObs++;
-				else if (cloudPoint->getVisibility().size() < 4) {
-					isPCTwoViews = false;
-					break;
-				}
 			}
 		}
-		if (isPCTwoViews && (nbRedundantObs > m_ratioRedundantObs * pcVisibility.size())) {
+		if (nbRedundantObs > m_ratioRedundantObs * pcVisibility.size()) {
 			this->removeKeyframe(itKf);
 			nbRemovedKfs++;
 		}
