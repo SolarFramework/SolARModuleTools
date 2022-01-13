@@ -56,7 +56,7 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	LOG_DEBUG("SolARSLAMTracking onConfigured");
 	m_reprojErrorThreshold = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("reprojErrorThreshold")->getFloatingValue();
 	m_thresConfidence = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("thresConfidence")->getFloatingValue();
-	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getFloatingValue();
+	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getIntegerValue();
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
@@ -220,7 +220,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 			LOG_DEBUG("Nb of matched local map: {}", nbMatchesLocalMap);
 		}
 	}
-	LOG_INFO("m_minNbInliers/newVisibility: {} / {}", m_minNbInliers, newMapVisibility.size());
+
 	if (newMapVisibility.size() < m_minNbInliers)
 		return FrameworkReturnCode::_ERROR_;
 
