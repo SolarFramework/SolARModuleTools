@@ -49,7 +49,6 @@ SolARSLAMTracking::SolARSLAMTracking() :ConfigurableBase(xpcf::toUUID<SolARSLAMT
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("thresAngleViewDirection", m_thresAngleViewDirection);
 	declareProperty("displayTrackedPoints", m_displayTrackedPoints);
-	declareProperty("estimatedPose", m_estimatedPose);
 	LOG_DEBUG("SolARSLAMTracking constructor");
 }
 
@@ -58,6 +57,7 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	LOG_DEBUG("SolARSLAMTracking onConfigured");
 	m_reprojErrorThreshold = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("reprojErrorThreshold")->getFloatingValue();
 	m_thresConfidence = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("thresConfidence")->getFloatingValue();
+	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getIntegerValue();
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
@@ -118,7 +118,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	// matching feature	
 	m_isLostTrack = true;	
 	m_matcher->match(m_referenceKeyframe->getDescriptors(), frame->getDescriptors(), matches);
-	if (matches.size() < 10)
+	if (matches.size() < m_minNbInliers)
 		return FrameworkReturnCode::_ERROR_;
     m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
 	float maxMatchDistance = -FLT_MAX;
@@ -221,6 +221,9 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 			LOG_DEBUG("Nb of matched local map: {}", nbMatchesLocalMap);
 		}
 	}
+
+	if (newMapVisibility.size() < m_minNbInliers)
+		return FrameworkReturnCode::_ERROR_;
 
 	// update map visibility of current frame
 	frame->addVisibilities(newMapVisibility);

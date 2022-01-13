@@ -111,7 +111,7 @@ private:
     float                                                           m_reprojErrorThreshold;
     float                                                           m_thresConfidence;
     int                                                             m_displayTrackedPoints = 1;
-    int                                                             m_estimatedPose = 0;
+	int																m_minNbInliers;
     bool                                                            m_isUpdateReferenceKeyframe = false;
     std::mutex                                                      m_refKeyframeMutex;
     SolAR::datastructure::CamCalibration                            m_camMatrix;
