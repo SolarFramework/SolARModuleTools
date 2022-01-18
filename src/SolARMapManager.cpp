@@ -163,14 +163,14 @@ FrameworkReturnCode SolARMapManager::addKeyframe(const SRef<datastructure::Keyfr
 
 FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyframe)
 {
-	const std::map<uint32_t, uint32_t>& keyframeVisibility = keyframe->getVisibility();
+	std::map<uint32_t, uint32_t> keyframeVisibility = keyframe->getVisibility();
 	// remove visibility of point cloud
 	for (auto const &v : keyframeVisibility) {
 		SRef<CloudPoint> point;
 		if (m_pointCloudManager->getPoint(v.second, point) == FrameworkReturnCode::_SUCCESS) {
 			// remove this cloud point if the number of visibilities is less than 2
 			if (point->getVisibility().size() <= 2)
-				m_pointCloudManager->suppressPoint(point->getId());
+				this->removeCloudPoint(point);
 			else
 				point->removeVisibility(keyframe->getId());							
 		}
@@ -198,7 +198,8 @@ int SolARMapManager::pointCloudPruning(const std::vector<SRef<CloudPoint>> &clou
 	// check reprojection error to prune cloud points
 	int count(0);
 	for (const auto &it : cloudPointsPruning)
-		if ((!it->isValid()) || (it->getReprojError() > m_reprojErrorThres) || (it->getConfidence() < m_thresConfidence)) {
+		if ((!it->isValid()) || (it->getReprojError() > m_reprojErrorThres) || 
+			(it->getConfidence() < m_thresConfidence) || (it->getVisibility().size() < 2)) {
 			this->removeCloudPoint(it);
 			count++;
 		}
