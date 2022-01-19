@@ -126,7 +126,7 @@ FrameworkReturnCode SolAROverlapDetector::detect(const SRef<datastructure::Map> 
 
 		}
 		// get 3D-3D correspondences
-		if (bestInliers.size() >= m_NbMinInliers) {
+        if (bestInliers.size() > 0) {
 			for (const auto &it : bestInliers) {
 				uint32_t idFloatCP = bestFirstCloudPoints[it]->getId();
 				uint32_t idGlobalCP = bestSecondCloudPoints[it]->getId();
@@ -139,7 +139,11 @@ FrameworkReturnCode SolAROverlapDetector::detect(const SRef<datastructure::Map> 
 				}				
 			}				
 		}
+
+        LOG_INFO("Number of inliers of keyframe {}: {}", queryKeyframe->getId(), bestInliers.size());
 	}
+
+    LOG_INFO("Number of overlap points: {}", ptsFloating.size());
 
 	std::vector<int> inliers;
 	if (m_estimator3D->estimate(ptsFloating, ptsGlobal, sim3Transform, inliers) == FrameworkReturnCode::_SUCCESS) {
