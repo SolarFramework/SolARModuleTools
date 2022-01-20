@@ -230,6 +230,8 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 				if (cloudPoint->getVisibility().size() >= 4)
 					nbRedundantObs++;
 			}
+			else
+				itKf->removeVisibility(itPC.first, idxPC);
 		}
 		if (nbRedundantObs > m_ratioRedundantObs * pcVisibility.size()) {
 			this->removeKeyframe(itKf);

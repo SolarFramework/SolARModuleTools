@@ -139,11 +139,9 @@ FrameworkReturnCode SolAROverlapDetector::detect(const SRef<datastructure::Map> 
 				}				
 			}				
 		}
-
-        LOG_INFO("Number of inliers of keyframe {}: {}", queryKeyframe->getId(), bestInliers.size());
+        LOG_DEBUG("Number of inliers of keyframe {}: {}", queryKeyframe->getId(), bestInliers.size());
 	}
-
-    LOG_INFO("Number of overlap points: {}", ptsFloating.size());
+    LOG_DEBUG("Number of overlap points: {}", ptsFloating.size());
 
 	std::vector<int> inliers;
 	if (m_estimator3D->estimate(ptsFloating, ptsGlobal, sim3Transform, inliers) == FrameworkReturnCode::_SUCCESS) {
