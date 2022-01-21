@@ -76,6 +76,111 @@ FrameworkReturnCode SolARMapManager::getMap(SRef<Map>& map)
 	return FrameworkReturnCode::_SUCCESS;
 }
 
+FrameworkReturnCode SolARMapManager::getSubmap(uint32_t idCenteredKeyframe, uint32_t nbKeyframes, SRef<SolAR::datastructure::Map>& submap)
+{
+	// create submap
+	submap = xpcf::utils::make_shared<Map>();
+	const SRef<KeyframeCollection>& subKeyframeCollection = submap->getConstKeyframeCollection();
+	const SRef<PointCloud>& subPointCloud = submap->getConstPointCloud();
+	const SRef<KeyframeRetrieval>& subKeyframeRetrieval = submap->getConstKeyframeRetrieval();
+	const SRef<CovisibilityGraph>& subCovisiGraph = submap->getConstCovisibilityGraph();
+
+	// get keyframes around the centered keyframe
+	std::vector<uint32_t> idKfs;
+	idKfs.push_back(idCenteredKeyframe);
+	int pos(0);
+	while ((pos < idKfs.size()) && (idKfs.size() < nbKeyframes)) {
+		std::vector<uint32_t> neighbors;
+		m_covisibilityGraphManager->getNeighbors(idKfs[pos], 1.f, neighbors);
+		for (auto id : neighbors)
+			if ((std::find(idKfs.begin(), idKfs.end(), id) == idKfs.end()) &&
+				(idKfs.size() < nbKeyframes))
+				idKfs.push_back(id);
+		pos++;
+	}
+	std::vector<SRef<Keyframe>> keyframes;
+	m_keyframesManager->getKeyframes(idKfs, keyframes);
+
+	// get all points seen by these keyframes	
+	std::set<uint32_t> idCPs;
+	for (auto kf : keyframes) {
+		const std::map<uint32_t, uint32_t>& visibilities = kf->getVisibility();
+		for (auto vi : visibilities)
+			idCPs.insert(vi.second);
+	}
+	std::vector<SRef<CloudPoint>> cloudPoints;
+	for (const auto& it : idCPs) {
+		SRef<CloudPoint> cp;
+		if (m_pointCloudManager->getPoint(it, cp) == FrameworkReturnCode::_SUCCESS)
+			cloudPoints.push_back(cp);
+	}
+	
+	// add cloud points	to submap
+	for (const auto &cp : cloudPoints)
+		subPointCloud->addPoint(*cp);
+
+	// add keyframes to submap
+	for (const auto &kf : keyframes)
+		subKeyframeCollection->addKeyframe(*kf);
+	
+	// find corresponding id of cloud point and keyframe from map to submap
+	std::vector<SRef<CloudPoint>> subCloudPoints;
+	std::vector<SRef<Keyframe>> subKeyframes;
+	subPointCloud->getAllPoints(subCloudPoints);
+	subKeyframeCollection->getAllKeyframes(subKeyframes);
+	std::map<uint32_t, uint32_t> idCP2Sub, idKf2Sub;
+	for (int i = 0; i < cloudPoints.size(); ++i)
+		idCP2Sub[cloudPoints[i]->getId()] = subCloudPoints[i]->getId();
+
+	for (int i = 0; i < keyframes.size(); ++i)
+		idKf2Sub[keyframes[i]->getId()] = subKeyframes[i]->getId();
+	
+	// update visibilities of keyframes in submap
+	for (const auto &kf : subKeyframes) {
+		std::map<uint32_t, uint32_t> visibilities = kf->getVisibility();
+		for (auto vi : visibilities) {
+			uint32_t idKp = vi.first;
+			uint32_t idCp = vi.second;
+			kf->removeVisibility(idKp, idCp);
+			auto it = idCP2Sub.find(idCp);
+			if (it != idCP2Sub.end())
+				kf->addVisibility(idKp, it->second);
+		}
+	}
+	
+	// update visibilities of keyframes in submap
+	for (const auto &cp : subCloudPoints) {
+		std::map<uint32_t, uint32_t> visibilities = cp->getVisibility();
+		for (auto vi : visibilities) {
+			uint32_t idKf = vi.first;
+			uint32_t idKp = vi.second;
+			cp->removeVisibility(idKf);
+			auto it = idKf2Sub.find(idKf);
+			if (it != idKf2Sub.end())
+				cp->addVisibility(it->second, idKp);
+		}
+	}
+	
+	// update covisibility graph
+	for (auto it1 = idKf2Sub.begin(); std::next(it1) != idKf2Sub.end(); ++it1)
+		for (auto it2 = std::next(it1); it2 != idKf2Sub.end(); ++it2) {
+			float weight;
+			if (m_covisibilityGraphManager->getEdge(it1->first, it2->first, weight) == FrameworkReturnCode::_SUCCESS)
+				subCovisiGraph->increaseEdge(it1->second, it2->second, weight);
+		}
+
+	// add keyframe retriever of local map to global map
+	const SRef<KeyframeRetrieval>& keyframeRetrieval = m_keyframeRetriever->getConstKeyframeRetrieval();
+	for (const auto &idKf : idKf2Sub) {
+		datastructure::BoWFeature bowDesc;
+		datastructure::BoWLevelFeature bowLevelDesc;
+		keyframeRetrieval->getBoWFeature(idKf.first, bowDesc);
+		keyframeRetrieval->getBoWLevelFeature(idKf.first, bowLevelDesc);
+		subKeyframeRetrieval->addDescriptor(idKf.second, bowDesc, bowLevelDesc);
+	}
+	return FrameworkReturnCode::_SUCCESS;
+}
+
 FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> keyframe, const float minWeightNeighbor, std::vector<SRef<CloudPoint>>& localPointCloud) const
 {	
 	// get neighbor keyframes of the keyframe
