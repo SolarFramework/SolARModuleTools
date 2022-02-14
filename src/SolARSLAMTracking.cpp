@@ -73,6 +73,7 @@ void SolARSLAMTracking::updateReferenceKeyframe(const SRef<Keyframe> refKeyframe
 {
 	std::unique_lock<std::mutex> lock(m_refKeyframeMutex);
 	m_referenceKeyframe = refKeyframe;	
+	m_lastKeyframeId = refKeyframe->getId();
 	m_isUpdateReferenceKeyframe = true;
 }
 
@@ -93,6 +94,11 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		return FrameworkReturnCode::_ERROR_;
 	std::vector<DescriptorMatch> matches;
 	Transform3Df framePose = frame->getPose();
+	// update local map
+	if (m_isUpdateReferenceKeyframe) {
+		updateLocalMap();
+		m_isLostTrack = false;
+	}
 	if (m_isLostTrack) {
 		LOG_DEBUG("Pose estimation has failed");		
 		// reloc
@@ -100,18 +106,16 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		if (m_keyframeRetriever->retrieve(frame, retKeyframesId) == FrameworkReturnCode::_SUCCESS) {
 			LOG_DEBUG("Successful relocalization. Update reference keyframe id: {}", retKeyframesId[0]);
 			SRef<Keyframe> bestRetKeyframe;
-			if (m_keyframesManager->getKeyframe(retKeyframesId[0], bestRetKeyframe) == FrameworkReturnCode::_SUCCESS)
-				updateReferenceKeyframe(bestRetKeyframe);
+			if (m_keyframesManager->getKeyframe(retKeyframesId[0], bestRetKeyframe) == FrameworkReturnCode::_SUCCESS) {
+				m_referenceKeyframe = bestRetKeyframe;
+				updateLocalMap();
+			}
 			else
 				return FrameworkReturnCode::_ERROR_;
 		}
 		else
 			LOG_DEBUG("Relocalization Failed");
-	}
-	// update local map
-	if (m_isUpdateReferenceKeyframe) {
-		updateLocalMap();
-	}
+	}	
 
 	// set reference keyframe for new frame
 	frame->setReferenceKeyframe(m_referenceKeyframe);	
@@ -236,34 +240,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		frame->setPose(refinedPose);
 	}
 	LOG_DEBUG("Refined pose: \n {}", frame->getPose().matrix());
-	m_lastPose = frame->getPose();
-
-	// compute number of shared cloud points between current frame and each keyframe
-	std::map<uint32_t, int> kfCounterVis;
-	for (const auto &it : newMapVisibility) {
-		SRef<CloudPoint> cloudPoint;
-		if (m_pointCloudManager->getPoint(it.second, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
-			const std::map<uint32_t, uint32_t> &cpKfVisibility = cloudPoint->getVisibility();
-			for (auto const &it_kf : cpKfVisibility)
-				kfCounterVis[it_kf.first]++;			
-		}
-	}
-	// find the keyframe that shares the most points
-	uint32_t idBestKf = m_referenceKeyframe->getId();
-	int nbMaxPts = kfCounterVis[idBestKf];	
-	for (const auto &it: kfCounterVis)
-		if (it.second > nbMaxPts) {
-			nbMaxPts = it.second;
-			idBestKf = it.first;
-		}
-	// update the reference keyframe
-	SRef<Keyframe> newRefKf;
-	if ((idBestKf != m_referenceKeyframe->getId()) && 
-		(m_keyframesManager->getKeyframe(idBestKf, newRefKf) == FrameworkReturnCode::_SUCCESS)) {
-		LOG_DEBUG("Update new reference keyframe from {} to {}", m_referenceKeyframe->getId(), idBestKf);
-		frame->setReferenceKeyframe(newRefKf);
-		updateReferenceKeyframe(newRefKf);
-	}
+	m_lastPose = frame->getPose();	
 		
 	// define invalid cloud points
 	std::vector<Point2Df> localPtsInvalid;
@@ -303,7 +280,35 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	if (m_displayTrackedPoints) {
 		m_overlay2DRed->drawCircles(localPtsInvalid, displayImage);
 		m_overlay2DGreen->drawCircles(pts2dInliers, displayImage);
-	}	
+	}
+
+	// compute number of shared cloud points between current frame and each keyframe
+	std::map<uint32_t, int> kfCounterVis;
+	for (const auto &it : newMapVisibility) {
+		SRef<CloudPoint> cloudPoint;
+		if (m_pointCloudManager->getPoint(it.second, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
+			const std::map<uint32_t, uint32_t> &cpKfVisibility = cloudPoint->getVisibility();
+			for (auto const &it_kf : cpKfVisibility)
+				kfCounterVis[it_kf.first]++;
+		}
+	}
+	// find the keyframe that shares the most points
+	uint32_t idBestKf = m_referenceKeyframe->getId();
+	int nbMaxPts = kfCounterVis[idBestKf];
+	for (const auto &it : kfCounterVis)
+		if (it.second > nbMaxPts) {
+			nbMaxPts = it.second;
+			idBestKf = it.first;
+		}
+	// update the reference keyframe
+	SRef<Keyframe> newRefKf;
+	if ((idBestKf <= m_lastKeyframeId) && (idBestKf != m_referenceKeyframe->getId()) &&
+		(m_keyframesManager->getKeyframe(idBestKf, newRefKf) == FrameworkReturnCode::_SUCCESS)) {
+		LOG_DEBUG("Update new reference keyframe from {} to {}", m_referenceKeyframe->getId(), idBestKf);
+		frame->setReferenceKeyframe(newRefKf);
+		m_referenceKeyframe = newRefKf;
+		updateLocalMap();
+	}
 
 	// tracking is good
 	m_isLostTrack = false;

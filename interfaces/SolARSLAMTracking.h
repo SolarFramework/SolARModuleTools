@@ -112,6 +112,7 @@ private:
     float                                                           m_thresConfidence;
     int                                                             m_displayTrackedPoints = 1;
 	int																m_minNbInliers;
+	int																m_lastKeyframeId = -1;
     bool                                                            m_isUpdateReferenceKeyframe = false;
     std::mutex                                                      m_refKeyframeMutex;
     SolAR::datastructure::CamCalibration                            m_camMatrix;
