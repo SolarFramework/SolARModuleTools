@@ -162,12 +162,14 @@ FrameworkReturnCode SolARMapManager::getSubmap(uint32_t idCenteredKeyframe, uint
 	}
 	
 	// update covisibility graph
-	for (auto it1 = idKf2Sub.begin(); std::next(it1) != idKf2Sub.end(); ++it1)
-		for (auto it2 = std::next(it1); it2 != idKf2Sub.end(); ++it2) {
-			float weight;
-			if (m_covisibilityGraphManager->getEdge(it1->first, it2->first, weight) == FrameworkReturnCode::_SUCCESS)
-				subCovisiGraph->increaseEdge(it1->second, it2->second, weight);
-		}
+	if (idKf2Sub.size() >= 2) {
+		for (auto it1 = idKf2Sub.begin(); std::next(it1) != idKf2Sub.end(); ++it1)
+			for (auto it2 = std::next(it1); it2 != idKf2Sub.end(); ++it2) {
+				float weight;
+				if (m_covisibilityGraphManager->getEdge(it1->first, it2->first, weight) == FrameworkReturnCode::_SUCCESS)
+					subCovisiGraph->increaseEdge(it1->second, it2->second, weight);
+			}
+	}
 
 	// add keyframe retriever of local map to global map
 	const SRef<KeyframeRetrieval>& keyframeRetrieval = m_keyframeRetriever->getConstKeyframeRetrieval();
@@ -248,10 +250,11 @@ FrameworkReturnCode SolARMapManager::removeCloudPoint(const SRef<CloudPoint> clo
 		}
 	}
 	// update covisibility graph
-	for (int i = 0; i < keyframeIds.size() - 1; i++)
-		for (int j = i + 1; j < keyframeIds.size(); j++)
-			m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
-
+	if (keyframeIds.size() >= 2) {
+		for (int i = 0; i < keyframeIds.size() - 1; i++)
+			for (int j = i + 1; j < keyframeIds.size(); j++)
+				m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
+	}
 	// remove cloud point
 	m_pointCloudManager->suppressPoint(cloudPoint->getId());
 	return FrameworkReturnCode::_SUCCESS;
