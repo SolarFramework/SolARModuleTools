@@ -250,20 +250,12 @@ FrameworkReturnCode SolARMapManager::removeCloudPoint(const SRef<CloudPoint> clo
 		}
 	}
 	// update covisibility graph
-<<<<<<< HEAD
-	if (keyframeIds.size() >= 2) {
-		for (int i = 0; i < keyframeIds.size() - 1; i++)
-			for (int j = i + 1; j < keyframeIds.size(); j++)
-				m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
-	}
-=======
     if (keyframeIds.size() >= 2) {
         for (int i = 0; i < keyframeIds.size() - 1; i++)
             for (int j = i + 1; j < keyframeIds.size(); j++)
                 m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
     }
 
->>>>>>> develop
 	// remove cloud point
 	m_pointCloudManager->suppressPoint(cloudPoint->getId());
 	return FrameworkReturnCode::_SUCCESS;
