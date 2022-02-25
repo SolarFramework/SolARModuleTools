@@ -43,10 +43,6 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::features::IDescriptorMatcherGeometric>(m_matcher);
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("maxNbNeighborKfs", m_maxNbNeighborKfs);
-	declareProperty("minTrackedPoints", m_minTrackedPoints);
-	declareProperty("nbVisibilityAtLeast", m_nbVisibilityAtLeast);
-	declareProperty("nbPassedFrameAtLeast", m_nbPassedFrameAtLeast);
-	declareProperty("ratioCPRefKeyframe", m_ratioCPRefKeyframe);
 	declareProperty("saveImage", m_isSaveImage);
 	LOG_DEBUG("SolARSLAMMapping constructor");
 }
@@ -56,34 +52,24 @@ void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
 	m_triangulator->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
 }
 
+bool SolARSLAMMapping::idle()
+{
+    std::unique_lock<std::mutex> lock(m_mutexIdle);
+    return m_idle;
+}
+
+void SolARSLAMMapping::setIdle(bool flag)
+{
+    std::unique_lock<std::mutex> lock(m_mutexIdle);
+    m_idle = flag;
+}
+
 FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyframe> & keyframe)
 {
-	// increment number of passed frames
-	m_nbPassedFrames++;
-	// find number of cloud points common between current frame and its reference keyframe
-	int nbCommonCP(0);
-	const std::map<uint32_t, uint32_t>& frameVisibilities = frame->getVisibility();
-	const uint32_t& refKf_id = frame->getReferenceKeyframe()->getId();
-	for (const auto &it : frameVisibilities) {
-		SRef<CloudPoint> cp;
-		if (m_pointCloudManager->getPoint(it.second, cp) == FrameworkReturnCode::_SUCCESS) {
-			const std::map<uint32_t, uint32_t>& cpVisibilities = cp->getVisibility();
-			auto refKf_it = cpVisibilities.find(refKf_id);
-			if (refKf_it != cpVisibilities.end())
-				nbCommonCP++;
-		}
-	}
-	LOG_DEBUG("Nb of passed frames: {}, ratio: {}", m_nbPassedFrames, (float)nbCommonCP / frame->getReferenceKeyframe()->getVisibility().size());
-	// check need new keyframe
-    if ((m_nbPassedFrames > m_nbPassedFrameAtLeast) && (frame->getVisibility().size() > m_nbVisibilityAtLeast) && 
-		((nbCommonCP < m_ratioCPRefKeyframe * frame->getReferenceKeyframe()->getVisibility().size()) || (frame->getVisibility().size() < m_minTrackedPoints)))
-	{
-		// create new keyframe
-		keyframe = processNewKeyframe(frame);
-		m_nbPassedFrames = 0;
-		return FrameworkReturnCode::_SUCCESS;
-	}
-	return FrameworkReturnCode::_ERROR_;
+    setIdle(false);
+    keyframe = processNewKeyframe(frame);
+    setIdle(true);
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 SRef<Keyframe> SolARSLAMMapping::processNewKeyframe(const SRef<Frame>& frame)

@@ -76,10 +76,10 @@ FrameworkReturnCode SolARCovisibilityGraphManager::suppressNode(const uint32_t n
 	return m_covisibilityGraph->suppressNode(node_id);
 }
 
-FrameworkReturnCode SolARCovisibilityGraphManager::getNeighbors(const uint32_t node_id, const float minWeight, std::vector<uint32_t>& neighbors) const
+FrameworkReturnCode SolARCovisibilityGraphManager::getNeighbors(const uint32_t node_id, const float minWeight, std::vector<uint32_t>& neighbors, const uint32_t maxNbNeighbors) const
 {
 	m_covisibilityGraph->acquireLock();
-	return m_covisibilityGraph->getNeighbors(node_id, minWeight, neighbors);
+	return m_covisibilityGraph->getNeighbors(node_id, minWeight, neighbors, maxNbNeighbors);
 }
 
 FrameworkReturnCode SolARCovisibilityGraphManager::minimalSpanningTree(std::vector<std::tuple<uint32_t, uint32_t, float>> &edges_weights, float &minTotalWeights)
