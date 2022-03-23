@@ -111,7 +111,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 			SRef<Keyframe> bestRetKeyframe;
 			if (m_keyframesManager->getKeyframe(retKeyframesId[0], bestRetKeyframe) == FrameworkReturnCode::_SUCCESS) {
 				updateReferenceKeyframe(bestRetKeyframe);
-				m_nbPassedFrames = m_nbPassedFrameAtLeast - 2;
+                m_nbPassedFrames = m_nbPassedFrameAtLeast - 1;
 			}
 			else
 				return FrameworkReturnCode::_ERROR_;
@@ -315,9 +315,10 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		LOG_DEBUG("Update new reference keyframe from {} to {}", m_referenceKeyframe->getId(), idBestKf);
 		frame->setReferenceKeyframe(newRefKf);
 		updateReferenceKeyframe(newRefKf);		
-		m_nbPassedFrames = m_nbPassedFrameAtLeast - 2;
-	}    
-    else if (!checkNeedNewKeyframe()) { // Check need new keyframe
+    }
+
+    // Check need new keyframe
+    if (!checkNeedNewKeyframe()) {
         LOG_DEBUG("Nb of passed frames: {}, ratio: {}", m_nbPassedFrames, (float)frame->getVisibility().size() / m_referenceKeyframe->getVisibility().size());
         // check conditions
         if ((m_nbPassedFrames > m_nbPassedFrameAtLeast) && (frame->getVisibility().size() > m_nbVisibilityAtLeast) &&
