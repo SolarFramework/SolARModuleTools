@@ -89,7 +89,6 @@ public:
 	void unloadComponent() override final;
 
 private:
-	SRef<SolAR::datastructure::Keyframe> processNewKeyframe(const SRef<SolAR::datastructure::Frame> &frame);
 	void updateAssociateCloudPoint(const SRef<SolAR::datastructure::Keyframe> &keyframe);
 	void findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
 	void cloudPointsCulling(const SRef<SolAR::datastructure::Keyframe> &keyframe);
