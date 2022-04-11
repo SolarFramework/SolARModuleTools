@@ -35,6 +35,7 @@ SolARSLAMTracking::SolARSLAMTracking() :ConfigurableBase(xpcf::toUUID<SolARSLAMT
 	addInterface<api::slam::ITracking>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
 	declareInjectable<api::storage::IKeyframesManager>(m_keyframesManager);
+	declareInjectable<api::storage::IPointCloudManager>(m_pointCloudManager);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IDescriptorMatcherRegion>(m_matcherRegion);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
@@ -48,7 +49,10 @@ SolARSLAMTracking::SolARSLAMTracking() :ConfigurableBase(xpcf::toUUID<SolARSLAMT
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("thresAngleViewDirection", m_thresAngleViewDirection);
 	declareProperty("displayTrackedPoints", m_displayTrackedPoints);
-	declareProperty("estimatedPose", m_estimatedPose);
+    declareProperty("minTrackedPoints", m_minTrackedPoints);
+    declareProperty("nbVisibilityAtLeast", m_nbVisibilityAtLeast);
+    declareProperty("nbPassedFrameAtLeast", m_nbPassedFrameAtLeast);
+    declareProperty("ratioCPRefKeyframe", m_ratioCPRefKeyframe);
 	LOG_DEBUG("SolARSLAMTracking constructor");
 }
 
@@ -57,6 +61,7 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	LOG_DEBUG("SolARSLAMTracking onConfigured");
 	m_reprojErrorThreshold = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("reprojErrorThreshold")->getFloatingValue();
 	m_thresConfidence = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("thresConfidence")->getFloatingValue();
+	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getIntegerValue();
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
@@ -68,11 +73,14 @@ void SolARSLAMTracking::setCameraParameters(const CamCalibration & intrinsicPara
 	m_projector->setCameraParameters(m_camMatrix, m_camDistortion);	
 }
 
-void SolARSLAMTracking::updateReferenceKeyframe(const SRef<Keyframe> refKeyframe)
+void SolARSLAMTracking::setNewKeyframe(const SRef<SolAR::datastructure::Keyframe> newKeyframe)
 {
-	std::unique_lock<std::mutex> lock(m_refKeyframeMutex);
-	m_referenceKeyframe = refKeyframe;	
-	m_isUpdateReferenceKeyframe = true;
+	std::unique_lock<std::mutex> lock(m_newKeyframeMutex);
+	LOG_DEBUG("Set new keyframe id: {}", newKeyframe->getId());
+	updateReferenceKeyframe(newKeyframe);	
+	m_lastKeyframeId = newKeyframe->getId();
+	m_nbPassedFrames = 0;
+	setNeedNewKeyframe(false);
 }
 
 float cosineViewDirectionAngle(const SRef<Frame>& frame, const SRef<CloudPoint>& cp)
@@ -85,6 +93,7 @@ float cosineViewDirectionAngle(const SRef<Frame>& frame, const SRef<CloudPoint>&
 
 FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Image> &displayImage)
 {
+	std::unique_lock<std::mutex> lock(m_newKeyframeMutex);
 	// init image to display
 	displayImage = frame->getView()->copy();
 	LOG_DEBUG("Number keypoints: {}", frame->getKeypoints().size());
@@ -92,32 +101,33 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		return FrameworkReturnCode::_ERROR_;
 	std::vector<DescriptorMatch> matches;
 	Transform3Df framePose = frame->getPose();
+    // lost tracking try to relocalize
 	if (m_isLostTrack) {
-		LOG_DEBUG("Pose estimation has failed");		
+		LOG_DEBUG("Tracking lost and try to relocalize");		
 		// reloc
 		std::vector < uint32_t> retKeyframesId;
 		if (m_keyframeRetriever->retrieve(frame, retKeyframesId) == FrameworkReturnCode::_SUCCESS) {
 			LOG_DEBUG("Successful relocalization. Update reference keyframe id: {}", retKeyframesId[0]);
 			SRef<Keyframe> bestRetKeyframe;
-			if (m_keyframesManager->getKeyframe(retKeyframesId[0], bestRetKeyframe) == FrameworkReturnCode::_SUCCESS)
+			if (m_keyframesManager->getKeyframe(retKeyframesId[0], bestRetKeyframe) == FrameworkReturnCode::_SUCCESS) {
 				updateReferenceKeyframe(bestRetKeyframe);
+                m_nbPassedFrames = m_nbPassedFrameAtLeast - 1;
+			}
 			else
 				return FrameworkReturnCode::_ERROR_;
 		}
-		else
+		else {
 			LOG_DEBUG("Relocalization Failed");
-	}
-	// update local map
-	if (m_isUpdateReferenceKeyframe) {
-		updateLocalMap();
-	}
+			return FrameworkReturnCode::_ERROR_;
+		}
+	}	
 
 	// set reference keyframe for new frame
 	frame->setReferenceKeyframe(m_referenceKeyframe);	
-	// matching feature	
-	m_isLostTrack = true;	
+    m_isLostTrack = true;
+	// matching feature			
 	m_matcher->match(m_referenceKeyframe->getDescriptors(), frame->getDescriptors(), matches);
-	if (matches.size() < 10)
+	if (matches.size() < m_minNbInliers)
 		return FrameworkReturnCode::_ERROR_;
     m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
 	float maxMatchDistance = -FLT_MAX;
@@ -142,7 +152,6 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		std::vector<uint32_t> inliers;
 		if (m_pnpRansac->estimate(pt2d, pt3d, inliers, framePose, m_lastPose) != FrameworkReturnCode::_SUCCESS)
 			return FrameworkReturnCode::_ERROR_;
-		LOG_DEBUG("Inliers / Nb of correspondences: {} / {}", inliers.size(), pt3d.size());
 		LOG_DEBUG("Estimated pose: \n {}", framePose.matrix());		
 		frame->setPose(framePose);	// Set the pose of the new frame
 	}
@@ -167,6 +176,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 				pts3dInliers.push_back(pt3d[i]);
 			}
 		}
+		LOG_DEBUG("Inliers / Nb of correspondences: {} / {}", pts2dInliers.size(), pt3d.size());
 	}
 
 	std::vector<SRef<CloudPoint>> localMapUnseenCandidates;
@@ -221,6 +231,9 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		}
 	}
 
+	if (newMapVisibility.size() < m_minNbInliers)
+		return FrameworkReturnCode::_ERROR_;
+
 	// update map visibility of current frame
 	frame->addVisibilities(newMapVisibility);
 	LOG_DEBUG("Nb of map visibilities of current frame: {}", newMapVisibility.size());
@@ -231,9 +244,13 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		m_pnp->estimate(pts2dInliers, pts3dInliers, refinedPose, frame->getPose());
 		frame->setPose(refinedPose);
 	}
-
 	LOG_DEBUG("Refined pose: \n {}", frame->getPose().matrix());
 	m_lastPose = frame->getPose();	
+
+    // tracking is good
+    m_isLostTrack = false;
+    m_nbPassedFrames++;
+		
 	// define invalid cloud points
 	std::vector<Point2Df> localPtsInvalid;
 	{		
@@ -267,26 +284,74 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		}
 	}
 	LOG_DEBUG("Number of invalid local points: {}", localPtsInvalid.size());
-	LOG_DEBUG("Number of tracked points: {}", pts2dInliers.size());
 	// display tracked points
 	if (m_displayTrackedPoints) {
 		m_overlay2DRed->drawCircles(localPtsInvalid, displayImage);
 		m_overlay2DGreen->drawCircles(pts2dInliers, displayImage);
-	}	
+	}
 
-	// tracking is good
-	m_isLostTrack = false;
+	// compute number of shared cloud points between current frame and each keyframe
+	std::map<uint32_t, int> kfCounterVis;
+	for (const auto &it : newMapVisibility) {
+		SRef<CloudPoint> cloudPoint;
+		if (m_pointCloudManager->getPoint(it.second, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
+			const std::map<uint32_t, uint32_t> &cpKfVisibility = cloudPoint->getVisibility();
+			for (auto const &it_kf : cpKfVisibility)
+				kfCounterVis[it_kf.first]++;
+		}
+	}
+	// find the keyframe that shares the most points
+	uint32_t idBestKf = m_referenceKeyframe->getId();
+	int nbMaxPts = kfCounterVis[idBestKf];
+	for (const auto &it : kfCounterVis)
+		if (it.second > nbMaxPts) {
+			nbMaxPts = it.second;
+			idBestKf = it.first;
+		}
+	// update the reference keyframe
+	SRef<Keyframe> newRefKf;
+	if ((idBestKf <= m_lastKeyframeId) && (idBestKf != m_referenceKeyframe->getId()) &&
+		(m_keyframesManager->getKeyframe(idBestKf, newRefKf) == FrameworkReturnCode::_SUCCESS)) {
+		LOG_DEBUG("Update new reference keyframe from {} to {}", m_referenceKeyframe->getId(), idBestKf);
+		frame->setReferenceKeyframe(newRefKf);
+		updateReferenceKeyframe(newRefKf);		
+    }
+
+    // Check need new keyframe
+    if (!checkNeedNewKeyframe()) {
+        LOG_DEBUG("Nb of passed frames: {}, ratio: {}", m_nbPassedFrames, (float)frame->getVisibility().size() / m_referenceKeyframe->getVisibility().size());
+        // check conditions
+        if ((m_nbPassedFrames > m_nbPassedFrameAtLeast) && (frame->getVisibility().size() > m_nbVisibilityAtLeast) &&
+            ((frame->getVisibility().size() < m_ratioCPRefKeyframe * m_referenceKeyframe->getVisibility().size()) || (frame->getVisibility().size() < m_minTrackedPoints)))
+        {
+            LOG_DEBUG("Need new keyframe");
+            setNeedNewKeyframe(true);
+        }
+    }
+
 	return FrameworkReturnCode::_SUCCESS;
 }
 
-void SolARSLAMTracking::updateLocalMap()
+bool SolARSLAMTracking::checkNeedNewKeyframe()
 {
-	std::unique_lock<std::mutex> lock(m_refKeyframeMutex);
+    std::unique_lock<std::mutex> lock(m_needNewKeyframe);
+    return m_isNeedNewKeyframe;
+}
+
+void SolARSLAMTracking::setNeedNewKeyframe(bool flag)
+{
+    std::unique_lock<std::mutex> lock(m_needNewKeyframe);
+    m_isNeedNewKeyframe = flag;
+}
+
+void SolARSLAMTracking::updateReferenceKeyframe(const SRef<Keyframe> refKeyframe)
+{
+	// update new reference keyframe
+	m_referenceKeyframe = refKeyframe;
 	m_localMap.clear();
 	// get local point cloud
 	m_mapManager->getLocalPointCloud(m_referenceKeyframe, m_minWeightNeighbor, m_localMap);
-	m_lastPose = m_referenceKeyframe->getPose();
-	m_isUpdateReferenceKeyframe = false;
+	m_lastPose = m_referenceKeyframe->getPose();	
 }
 
 }

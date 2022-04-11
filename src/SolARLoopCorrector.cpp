@@ -125,13 +125,14 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 
 	// Get duplicated points between the query keyframe and the loop keyframe
 	std::vector < std::pair<SRef<CloudPoint>, SRef<CloudPoint>>> duplicatedCPs;	
-	std::set<uint32_t> checkCurrentlocalMapPoints;
+	std::set<uint32_t> checkCurrentlocalMapPoints, checkLooplocalMapPoints;
 	for (const auto &it : duplicatedPointsIndices) {
 		SRef<CloudPoint> cp1, cp2;
 		if ((m_pointCloudManager->getPoint(it.first, cp1) == FrameworkReturnCode::_SUCCESS) &&
 			(m_pointCloudManager->getPoint(it.second, cp2) == FrameworkReturnCode::_SUCCESS)) {
 			duplicatedCPs.push_back(std::make_pair(cp1, cp2));
 			checkCurrentlocalMapPoints.insert(it.first);
+			checkLooplocalMapPoints.insert(it.second);
 		}		
 	}
 
@@ -169,10 +170,12 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 			if (kpIt != cpVisibilities.end()) {
 				uint32_t idCPLoop = kpIt->second;
 				SRef<CloudPoint> cpLoop;
-				if (m_pointCloudManager->getPoint(idCPLoop, cpLoop) != FrameworkReturnCode::_SUCCESS)
+				if ((checkLooplocalMapPoints.find(idCPLoop) != checkLooplocalMapPoints.end()) || 
+					m_pointCloudManager->getPoint(idCPLoop, cpLoop) != FrameworkReturnCode::_SUCCESS)
 					continue;
 				duplicatedCPs.push_back(std::make_pair(uncheckCurrentlocalCPs[idxCPCurrent], cpLoop));
 				checkCurrentlocalMapPoints.insert(uncheckCurrentlocalCPs[idxCPCurrent]->getId());
+				checkLooplocalMapPoints.insert(idCPLoop);
 			}
 		}
 	}
@@ -185,8 +188,8 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 	for (const auto &dup : duplicatedCPs) {
 		SRef<CloudPoint> cp1 = dup.first;
 		SRef<CloudPoint> cp2 = dup.second;
-		const std::map<uint32_t, uint32_t>& visibilities1 = cp1->getVisibility();
-		const std::map<uint32_t, uint32_t>& visibilities2 = cp2->getVisibility();
+		std::map<uint32_t, uint32_t> visibilities1 = cp1->getVisibility();
+		std::map<uint32_t, uint32_t> visibilities2 = cp2->getVisibility();
 		for (const auto &vi1 : visibilities1) {
 			uint32_t id_kf1 = vi1.first;
 			uint32_t id_kp1 = vi1.second;

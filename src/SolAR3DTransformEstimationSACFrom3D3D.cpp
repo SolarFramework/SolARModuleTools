@@ -181,7 +181,7 @@ FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const std::v
 	}
 
 	if (bestInliers.size() < m_NbInliersToValidPose) {
-		LOG_WARNING("Number of inliers points must be valid ( equal and > to {}): {} inliers for {} input points", m_NbInliersToValidPose, bestInliers.size(), firstPoints3D.size());
+		LOG_DEBUG("Number of inliers points must be valid ( equal and > to {}): {} inliers for {} input points", m_NbInliersToValidPose, bestInliers.size(), firstPoints3D.size());
 		return FrameworkReturnCode::_ERROR_;
 	}
 

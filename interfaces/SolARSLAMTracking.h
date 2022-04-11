@@ -85,10 +85,14 @@ public:
 	/// @param[in] Camera calibration matrix parameters.
 	/// @param[in] Camera distorsion parameters.
 	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
+	
+	/// @brief this method is used to set new keyframe for tracking process
+	/// @param[in] newKeyframme the new keyframe
+	void setNewKeyframe(const SRef<SolAR::datastructure::Keyframe> newKeyframe) override;
 
-	/// @brief this method is used to update reference keyframe to track
-	/// @param[in] refKeyframe: the new reference keyframe.
-    void updateReferenceKeyframe(const SRef<SolAR::datastructure::Keyframe> refKeyframe) override;
+    /// @brief check need to create a new keyframe
+    /// @return true if need to create a new keyframe, else false
+    bool checkNeedNewKeyframe() override;
 
 	/// @brief this method is used to process tracking
 	/// @param[in] frame: the input frame.
@@ -99,7 +103,8 @@ public:
 	void unloadComponent() override final;
 
 private:
-	void updateLocalMap();
+	void updateReferenceKeyframe(const SRef<SolAR::datastructure::Keyframe> refKeyframe);
+    void setNeedNewKeyframe(bool flag);
 
 private:
     SRef<SolAR::datastructure::Keyframe>                            m_referenceKeyframe;
@@ -111,9 +116,16 @@ private:
     float                                                           m_reprojErrorThreshold;
     float                                                           m_thresConfidence;
     int                                                             m_displayTrackedPoints = 1;
-    int                                                             m_estimatedPose = 0;
-    bool                                                            m_isUpdateReferenceKeyframe = false;
-    std::mutex                                                      m_refKeyframeMutex;
+	int																m_minNbInliers;
+	int																m_lastKeyframeId = -1;
+    bool                                                            m_isNeedNewKeyframe = false;
+    int                                                             m_minTrackedPoints = 200;
+    int                                                             m_nbPassedFrames = 0;
+    int                                                             m_nbVisibilityAtLeast = 20;
+    int                                                             m_nbPassedFrameAtLeast = 5;
+    float                                                           m_ratioCPRefKeyframe = 0.6;
+    std::mutex                                                      m_newKeyframeMutex;
+    std::mutex                                                      m_needNewKeyframe;
     SolAR::datastructure::CamCalibration                            m_camMatrix;
     SolAR::datastructure::CamDistortion                             m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
@@ -127,6 +139,7 @@ private:
     SRef<SolAR::api::geom::IProject>                                m_projector;
     SRef<SolAR::api::reloc::IKeyframeRetriever>                     m_keyframeRetriever;
     SRef<SolAR::api::storage::IKeyframesManager>                    m_keyframesManager;
+    SRef<SolAR::api::storage::IPointCloudManager>                   m_pointCloudManager;
 };
 
 }

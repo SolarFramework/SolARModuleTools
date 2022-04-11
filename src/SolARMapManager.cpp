@@ -76,37 +76,156 @@ FrameworkReturnCode SolARMapManager::getMap(SRef<Map>& map)
 	return FrameworkReturnCode::_SUCCESS;
 }
 
-FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> keyframe, const float minWeightNeighbor, std::vector<SRef<CloudPoint>>& localPointCloud) const
+FrameworkReturnCode SolARMapManager::getSubmap(uint32_t idCenteredKeyframe, uint32_t nbKeyframes, SRef<SolAR::datastructure::Map>& submap)
+{
+	// create submap
+	submap = xpcf::utils::make_shared<Map>();
+	const SRef<KeyframeCollection>& subKeyframeCollection = submap->getConstKeyframeCollection();
+	const SRef<PointCloud>& subPointCloud = submap->getConstPointCloud();
+	const SRef<KeyframeRetrieval>& subKeyframeRetrieval = submap->getConstKeyframeRetrieval();
+	const SRef<CovisibilityGraph>& subCovisiGraph = submap->getConstCovisibilityGraph();
+
+	// get keyframes around the centered keyframe
+	std::vector<uint32_t> idKfs;
+	idKfs.push_back(idCenteredKeyframe);
+	int pos(0);
+	while ((pos < idKfs.size()) && (idKfs.size() < nbKeyframes)) {
+		std::vector<uint32_t> neighbors;
+		m_covisibilityGraphManager->getNeighbors(idKfs[pos], 1.f, neighbors);
+		for (auto id : neighbors)
+			if ((std::find(idKfs.begin(), idKfs.end(), id) == idKfs.end()) &&
+				(idKfs.size() < nbKeyframes))
+				idKfs.push_back(id);
+		pos++;
+	}
+	std::vector<SRef<Keyframe>> keyframes;
+	m_keyframesManager->getKeyframes(idKfs, keyframes);
+
+	// get all points seen by these keyframes	
+	std::set<uint32_t> idCPs;
+	for (auto kf : keyframes) {
+		const std::map<uint32_t, uint32_t>& visibilities = kf->getVisibility();
+		for (auto vi : visibilities)
+			idCPs.insert(vi.second);
+	}
+	std::vector<SRef<CloudPoint>> cloudPoints;
+	for (const auto& it : idCPs) {
+		SRef<CloudPoint> cp;
+		if (m_pointCloudManager->getPoint(it, cp) == FrameworkReturnCode::_SUCCESS)
+			cloudPoints.push_back(cp);
+	}
+	
+	// add cloud points	to submap
+	for (const auto &cp : cloudPoints)
+		subPointCloud->addPoint(*cp);
+
+	// add keyframes to submap
+	for (const auto &kf : keyframes)
+		subKeyframeCollection->addKeyframe(*kf);
+	
+	// find corresponding id of cloud point and keyframe from map to submap
+	std::vector<SRef<CloudPoint>> subCloudPoints;
+	std::vector<SRef<Keyframe>> subKeyframes;
+	subPointCloud->getAllPoints(subCloudPoints);
+	subKeyframeCollection->getAllKeyframes(subKeyframes);
+	std::map<uint32_t, uint32_t> idCP2Sub, idKf2Sub;
+	for (int i = 0; i < cloudPoints.size(); ++i)
+		idCP2Sub[cloudPoints[i]->getId()] = subCloudPoints[i]->getId();
+
+	for (int i = 0; i < keyframes.size(); ++i)
+		idKf2Sub[keyframes[i]->getId()] = subKeyframes[i]->getId();
+	
+	// update visibilities of keyframes in submap
+	for (const auto &kf : subKeyframes) {
+		std::map<uint32_t, uint32_t> visibilities = kf->getVisibility();
+		for (auto vi : visibilities) {
+			uint32_t idKp = vi.first;
+			uint32_t idCp = vi.second;
+			kf->removeVisibility(idKp, idCp);
+			auto it = idCP2Sub.find(idCp);
+			if (it != idCP2Sub.end())
+				kf->addVisibility(idKp, it->second);
+		}
+	}
+	
+	// update visibilities of keyframes in submap
+	for (const auto &cp : subCloudPoints) {
+		std::map<uint32_t, uint32_t> visibilities = cp->getVisibility();
+		for (auto vi : visibilities) {
+			uint32_t idKf = vi.first;
+			uint32_t idKp = vi.second;
+			cp->removeVisibility(idKf);
+			auto it = idKf2Sub.find(idKf);
+			if (it != idKf2Sub.end())
+				cp->addVisibility(it->second, idKp);
+		}
+	}
+	
+	// update covisibility graph
+	if (idKf2Sub.size() >= 2) {
+		for (auto it1 = idKf2Sub.begin(); std::next(it1) != idKf2Sub.end(); ++it1)
+			for (auto it2 = std::next(it1); it2 != idKf2Sub.end(); ++it2) {
+				float weight;
+				if (m_covisibilityGraphManager->getEdge(it1->first, it2->first, weight) == FrameworkReturnCode::_SUCCESS)
+					subCovisiGraph->increaseEdge(it1->second, it2->second, weight);
+			}
+	}
+
+	// add keyframe retriever of local map to global map
+	const SRef<KeyframeRetrieval>& keyframeRetrieval = m_keyframeRetriever->getConstKeyframeRetrieval();
+	for (const auto &idKf : idKf2Sub) {
+		datastructure::BoWFeature bowDesc;
+		datastructure::BoWLevelFeature bowLevelDesc;
+		keyframeRetrieval->getBoWFeature(idKf.first, bowDesc);
+		keyframeRetrieval->getBoWLevelFeature(idKf.first, bowLevelDesc);
+		subKeyframeRetrieval->addDescriptor(idKf.second, bowDesc, bowLevelDesc);
+	}
+	return FrameworkReturnCode::_SUCCESS;
+}
+
+FrameworkReturnCode SolARMapManager::getLocalPointCloud(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes,
+                                                        std::vector<SRef<SolAR::datastructure::CloudPoint>> &localPointCloud) const
+{
+    // get all cloud point visibilities from keyframes
+    std::map<uint32_t, std::map<uint32_t, uint32_t>> idxLocalMap;
+    for (auto const & it : keyframes) {
+        std::map<uint32_t, uint32_t> visibility = it->getVisibility();
+        for (auto const &v : visibility)
+            idxLocalMap[v.second][it->getId()] = v.first;
+    }
+    // get local point cloud
+    for (auto const &it : idxLocalMap) {
+        SRef<CloudPoint> point;
+        if (m_pointCloudManager->getPoint(it.first, point) == FrameworkReturnCode::_SUCCESS)
+            localPointCloud.push_back(point);
+        else {
+            for (auto const &v : it.second) {
+                SRef<Keyframe> keyframe;
+                if (m_keyframesManager->getKeyframe(v.first, keyframe) != FrameworkReturnCode::_SUCCESS)
+                    continue;
+                keyframe->removeVisibility(v.second, it.first);
+            }
+        }
+    }
+    return FrameworkReturnCode::_SUCCESS;
+}
+
+FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> keyframe,
+                                                        const float minWeightNeighbor,
+                                                        std::vector<SRef<CloudPoint>>& localPointCloud) const
 {	
 	// get neighbor keyframes of the keyframe
 	std::vector<uint32_t> neighKeyframesId;
 	m_covisibilityGraphManager->getNeighbors(keyframe->getId(), minWeightNeighbor, neighKeyframesId);
-	neighKeyframesId.push_back(keyframe->getId());
-	// get all cloud point visibilities from keyframes
-	std::map<uint32_t, std::map<uint32_t, uint32_t>> tmpIdxLocalMap;
+    // get keyframes
+    std::vector<SRef<Keyframe>> keyframes;
 	for (auto const &it : neighKeyframesId) {
 		SRef<Keyframe> keyframe;
-		if (m_keyframesManager->getKeyframe(it, keyframe) != FrameworkReturnCode::_SUCCESS)
-			continue;
-		const std::map<uint32_t, uint32_t> &visibility = keyframe->getVisibility();
-		for (auto const &v : visibility)
-			tmpIdxLocalMap[v.second][it] = v.first;
+        if (m_keyframesManager->getKeyframe(it, keyframe) == FrameworkReturnCode::_SUCCESS)
+            keyframes.push_back(keyframe);
 	}
-	// get local point cloud
-	for (auto const &it : tmpIdxLocalMap) {
-		SRef<CloudPoint> point;
-		if (m_pointCloudManager->getPoint(it.first, point) == FrameworkReturnCode::_SUCCESS)
-			localPointCloud.push_back(point);
-		else {
-			for (auto const &v : it.second) {
-				SRef<Keyframe> keyframe;
-				if (m_keyframesManager->getKeyframe(v.first, keyframe) != FrameworkReturnCode::_SUCCESS)
-					continue;
-				keyframe->removeVisibility(v.second, it.first);
-			}
-		}
-	}
-	return FrameworkReturnCode::_SUCCESS;
+    keyframes.push_back(keyframe);
+    return getLocalPointCloud(keyframes, localPointCloud);
 }
 
 FrameworkReturnCode SolARMapManager::addCloudPoint(const SRef<CloudPoint> cloudPoint)
@@ -143,9 +262,11 @@ FrameworkReturnCode SolARMapManager::removeCloudPoint(const SRef<CloudPoint> clo
 		}
 	}
 	// update covisibility graph
-	for (int i = 0; i < keyframeIds.size() - 1; i++)
-		for (int j = i + 1; j < keyframeIds.size(); j++)
-			m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
+    if (keyframeIds.size() >= 2) {
+        for (int i = 0; i < keyframeIds.size() - 1; i++)
+            for (int j = i + 1; j < keyframeIds.size(); j++)
+                m_covisibilityGraphManager->decreaseEdge(keyframeIds[i], keyframeIds[j], 1);
+    }
 
 	// remove cloud point
 	m_pointCloudManager->suppressPoint(cloudPoint->getId());
@@ -163,15 +284,16 @@ FrameworkReturnCode SolARMapManager::addKeyframe(const SRef<datastructure::Keyfr
 
 FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyframe)
 {
-	const std::map<uint32_t, uint32_t>& keyframeVisibility = keyframe->getVisibility();
+	std::map<uint32_t, uint32_t> keyframeVisibility = keyframe->getVisibility();
 	// remove visibility of point cloud
 	for (auto const &v : keyframeVisibility) {
 		SRef<CloudPoint> point;
 		if (m_pointCloudManager->getPoint(v.second, point) == FrameworkReturnCode::_SUCCESS) {
-			point->removeVisibility(keyframe->getId());
 			// remove this cloud point if the number of visibilities is less than 2
-			if (point->getVisibility().size() < 2)
-				m_pointCloudManager->suppressPoint(point->getId());
+			if (point->getVisibility().size() <= 2)
+				this->removeCloudPoint(point);
+			else
+				point->removeVisibility(keyframe->getId());							
 		}
 	}
 	// remove covisibility graph
@@ -197,7 +319,8 @@ int SolARMapManager::pointCloudPruning(const std::vector<SRef<CloudPoint>> &clou
 	// check reprojection error to prune cloud points
 	int count(0);
 	for (const auto &it : cloudPointsPruning)
-		if ((!it->isValid()) || (it->getReprojError() > m_reprojErrorThres) || (it->getConfidence() < m_thresConfidence)) {
+		if ((!it->isValid()) || (it->getReprojError() > m_reprojErrorThres) || 
+			(it->getConfidence() < m_thresConfidence) || (it->getVisibility().size() < 2)) {
 			this->removeCloudPoint(it);
 			count++;
 		}
@@ -221,20 +344,17 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 			continue;
 		const std::map<uint32_t, uint32_t>& pcVisibility = itKf->getVisibility();
 		int nbRedundantObs(0);
-		bool isPCTwoViews(true);
 		for (const auto &itPC : pcVisibility) {
 			uint32_t idxPC = itPC.second;
 			SRef<CloudPoint> cloudPoint;
 			if (m_pointCloudManager->getPoint(idxPC, cloudPoint) == FrameworkReturnCode::_SUCCESS) {
-				if (cloudPoint->getVisibility().size() >= 5)
+				if (cloudPoint->getVisibility().size() >= 4)
 					nbRedundantObs++;
-				else if (cloudPoint->getVisibility().size() < 4) {
-					isPCTwoViews = false;
-					break;
-				}
 			}
+			else
+				itKf->removeVisibility(itPC.first, idxPC);
 		}
-		if (isPCTwoViews && (nbRedundantObs > m_ratioRedundantObs * pcVisibility.size())) {
+		if (nbRedundantObs > m_ratioRedundantObs * pcVisibility.size()) {
 			this->removeKeyframe(itKf);
 			nbRemovedKfs++;
 		}

@@ -1,7 +1,6 @@
 SolArModulePipeline {
     moduleName="SolARModuleTools"
     dirName="SolARBuild"
-    makeTarget="install install_deps"
     runTests=true
     android=true
 }
