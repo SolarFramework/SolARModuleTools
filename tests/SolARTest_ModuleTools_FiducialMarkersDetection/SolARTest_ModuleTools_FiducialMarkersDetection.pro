@@ -5,7 +5,7 @@ CONFIG -= qt
 QMAKE_PROJECT_DEPTH = 0
 
 ## global defintions : target lib name, version
-TARGET = SolARTest_ModuleTools_WorldGraphLoader
+TARGET = SolARTest_ModuleTools_FiducialMarkersDetection
 VERSION=0.11.0
 PROJECTDEPLOYDIR = $${PWD}/..
 
@@ -35,6 +35,8 @@ PROJECTCONFIG = QTVS
 
 #NOTE : CONFIG as staticlib or sharedlib, DEPENDENCIESCONFIG as staticlib or sharedlib, QMAKE_TARGET.arch and PROJECTDEPLOYDIR MUST BE DEFINED BEFORE templatelibconfig.pri inclusion
 include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/templateappconfig.pri)))  # Shell_quote & shell_path required for visual on windows
+
+HEADERS += \
 
 SOURCES += \
     main.cpp
@@ -85,14 +87,15 @@ linux {
 }
 
 configfile.path = $${TARGETDEPLOYDIR}/
-configfile.files = $${PWD}/SolARTest_ModuleTools_WorldGraphLoader_conf.xml \
-					$${PWD}/world_graph.json \
-					$${PWD}/graf1.png
+configfile.files = $${PWD}/SolARTest_ModuleTools_FiducialMarkersDetection_conf.xml \
+					$${PWD}/FiducialMarkers.json \
+					$${PWD}/FiducialMarkers.png \
+					$${PWD}/camera_calibration.json					
 
 INSTALLS += configfile
 
 DISTFILES += \
-    SolARTest_ModuleTools_WorldGraphLoader_conf.xml \
+    SolARTest_ModuleTools_FiducialMarkersDetection_conf.xml \
     packagedependencies.txt
 
 #NOTE : Must be placed at the end of the .pro

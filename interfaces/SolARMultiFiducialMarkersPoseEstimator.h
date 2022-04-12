@@ -17,17 +17,9 @@
 #ifndef SOLARMULTIFIDUCIALMARKERSPOSEESTIMATOR_H
 #define SOLARMULTIFIDUCIALMARKERSPOSEESTIMATOR_H
 #include "api/solver/pose/IMultiTrackablesPose.h"
-#include "api/image/IImageFilter.h"
-#include "api/image/IImageConvertor.h"
-#include "api/features/IContoursExtractor.h"
-#include "api/features/IContoursFilter.h"
-#include "api/image/IPerspectiveController.h"
-#include "api/features/IDescriptorsExtractorSBPattern.h"
-#include "api/features/ISBPatternReIndexer.h"
+#include "api/features/I2DTrackablesDetector.h"
 #include "api/geom/IProject.h"
 #include "api/solver/pose/I3DTransformFinderFrom2D3D.h"
-#include "api/features/ICornerRefinement.h"
-#include "datastructure/Image.h"
 #include "datastructure/FiducialMarker.h"
 #include "SolARToolsAPI.h"
 #include "xpcf/component/ConfigurableBase.h"
@@ -42,28 +34,15 @@ namespace TOOLS {
 * <TT>UUID: 9a4521de-2ea5-48f4-97ba-7e698a426076</TT>
 *
 * @SolARComponentInjectablesBegin
-* @SolARComponentInjectable{SolAR::api::image::IImageFilter, optional}
-* @SolARComponentInjectable{SolAR::api::image::IImageConvertor}
-* @SolARComponentInjectable{SolAR::api::features::IContoursExtractor}
-* @SolARComponentInjectable{SolAR::api::features::IContoursFilter}
-* @SolARComponentInjectable{SolAR::api::image::IPerspectiveController}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractorSBPattern}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
-* @SolARComponentInjectable{SolAR::api::features::ISBPatternReIndexer}
 * @SolARComponentInjectable{SolAR::api::solver::pose::I3DTransformFinderFrom2D3D}
-* @SolARComponentInjectable{SolAR::api::features::ICornerRefinement}
+* @SolARComponentInjectable{SolAR::api::geom::IProject}
+* @SolARComponentInjectable{SolAR::api::features::I2DTrackablesDetector}
 * @SolARComponentInjectablesEnd
 *
 * @SolARComponentPropertiesBegin
-* @SolARComponentProperty{ nbThreshold,
+* @SolARComponentProperty{ m_maxReprojError,
 *                         ,
-*                         @SolARComponentPropertyDescNum{ int, [0..MAX INT], 3 }}
-* @SolARComponentProperty{ minThreshold,
-*                          ,
-*                          @SolARComponentPropertyDescNum{ int, [-1..MAX INT], -1 }}
-* @SolARComponentProperty{ maxThreshold,
-*                          ,
-*                          @SolARComponentPropertyDescNum{ int, [0..MAX INT], 220 }}
+*                         @SolARComponentPropertyDescNum{ float, [0..MAX FLOAT], 1.0 }}
 * @SolARComponentPropertiesEnd
 *
 */
@@ -97,24 +76,12 @@ public:
 private:
     SolAR::datastructure::CamCalibration						m_camMatrix;
     SolAR::datastructure::CamDistortion                         m_camDistortion;
-    SRef<SolAR::api::image::IImageFilter>						m_imageFilterBinary;
-    SRef<SolAR::api::image::IImageConvertor>					m_imageConvertor;
-    SRef<api::features::IContoursExtractor>                     m_contoursExtractor;
-    SRef<SolAR::api::features::IContoursFilter>                 m_contoursFilter;
-    SRef<SolAR::api::image::IPerspectiveController>             m_perspectiveController;
-    SRef<SolAR::api::features::IDescriptorsExtractorSBPattern>	m_patternDescriptorExtractor;
-    SRef<SolAR::api::features::IDescriptorMatcher>				m_patternMatcher;
-    SRef<SolAR::api::features::ISBPatternReIndexer>             m_patternReIndexer;
     SRef<SolAR::api::solver::pose::I3DTransformFinderFrom2D3D>	m_pnp;
-    SRef<SolAR::api::features::ICornerRefinement>				m_cornerRefinement;
+    SRef<SolAR::api::features::I2DTrackablesDetector>           m_markersDetector;
     SRef<SolAR::api::geom::IProject>							m_projector;
-	std::map<int, std::vector<SRef<SolAR::datastructure::DescriptorBuffer>>> m_markerPatternDescriptors;
-	std::map<int, std::vector<std::vector<SolAR::datastructure::Point3Df>>>	 m_pattern3DPoints;
-	int															m_nbMarkers;
-    int                                                         m_nbThreshold = 3;
-    int                                                         m_minThreshold = -1;
-    int                                                         m_maxThreshold = 220;
-    float                                                       m_maxReprojError = 0.5f;
+    std::vector<std::vector<SolAR::datastructure::Point3Df>>	m_pattern3DPoints;
+    int															m_nbMarkers;
+    float                                                       m_maxReprojError = 1.0f;
 };
 
 }

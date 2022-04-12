@@ -60,7 +60,7 @@ class SolARStereoBootstrapper;
 class SolARStereoReprojection;
 class SolARWorldGraphLoader;
 class SolARMultiFiducialMarkersPoseEstimator;
-
+class SolAFiducialMarkersDetector;
 }
 }
 }
@@ -222,6 +222,10 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARMultiFiducialMarkersPos
                             "9a4521de-2ea5-48f4-97ba-7e698a426076",
                             "SolARMultiFiducialMarkersPoseEstimator",
                             "Estimate camera pose based on a set of fiducial markers.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolAFiducialMarkersDetector,
+                            "31fa26d6-9744-4522-85fa-fc2baafbe397",
+                            "SolAFiducialMarkersDetector",
+                            "Detect a set of given 2D fiducial markers in an image.")
 							
 
 #endif // SOLARMODULETOOLS_TRAITS_H
