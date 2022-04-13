@@ -77,6 +77,10 @@ public:
 	/// @param[in] camParams Camera parameters.
 	void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
 
+    /// @brief check the mapping process is idle
+    /// @return true if the mapping process is idle, else false
+    bool idle() override;
+
 	/// @brief this method is used to process mapping task.
 	/// @param[in] frame: the input frame.
     /// @param[out] keyframe: new keyframe or new reference keyframe found.
@@ -85,20 +89,17 @@ public:
 	void unloadComponent() override final;
 
 private:
-	SRef<SolAR::datastructure::Keyframe> processNewKeyframe(const SRef<SolAR::datastructure::Frame> &frame);
 	void updateAssociateCloudPoint(const SRef<SolAR::datastructure::Keyframe> &keyframe);
 	void findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
 	void cloudPointsCulling(const SRef<SolAR::datastructure::Keyframe> &keyframe);
+    void setIdle(bool flag);
 
 private:
 	float																		m_minWeightNeighbor = 1.f;
-	int																			m_minTrackedPoints = 200;
-	int																			m_maxNbNeighborKfs = 5;
-	int																			m_nbPassedFrames = 0;
-	int																			m_nbVisibilityAtLeast = 30;
-	int																			m_nbPassedFrameAtLeast = 5;
-	float																		m_ratioCPRefKeyframe = 0.5;
+	int																			m_maxNbNeighborKfs = 5;	
 	int																			m_isSaveImage = 0;
+    bool                                                                        m_idle = true;
+    std::mutex                                                                  m_mutexIdle;
     SolAR::datastructure::CameraParameters										m_camParams;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;

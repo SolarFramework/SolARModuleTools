@@ -190,11 +190,14 @@ FrameworkReturnCode SolARBoostCovisibilityGraph::suppressNode(const uint32_t nod
 	return FrameworkReturnCode::_SUCCESS;
 }
 
-FrameworkReturnCode SolARBoostCovisibilityGraph::getNeighbors(uint32_t node_id, float minWeight, std::vector<uint32_t>& neighbors) const
+FrameworkReturnCode SolARBoostCovisibilityGraph::getNeighbors(uint32_t node_id, float minWeight, std::vector<uint32_t>& neighbors, const uint32_t maxNbNeighbors) const
 {
     //std::unique_lock<std::mutex> lock(m_mutex);
     // this version does not sort neighboors TODO ?
     neighbors.clear();
+	int nbNeighbors = std::numeric_limits<int>::max();
+	if (maxNbNeighbors > 0)
+		nbNeighbors = maxNbNeighbors;
     if(isNode(node_id))
     {
         vertex_t vertex_id = m_map.at(node_id);
@@ -210,9 +213,12 @@ FrameworkReturnCode SolARBoostCovisibilityGraph::getNeighbors(uint32_t node_id, 
                if(node_id==m_graph[v1].frame_id)
                {
                     neighbors.push_back(m_graph[v2].frame_id);
-               }else{
+               }
+			   else{
                     neighbors.push_back(m_graph[v1].frame_id);
                }
+			   if (neighbors.size() == nbNeighbors)
+				   break;
            }
         }
     }else{
