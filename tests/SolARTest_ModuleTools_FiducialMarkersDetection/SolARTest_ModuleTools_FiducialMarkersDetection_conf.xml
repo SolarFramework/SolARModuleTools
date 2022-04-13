@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <xpcf-registry autoAlias="true">
     <module uuid="28b89d39-41bd-451d-b19e-d25a3d7c5797" name="SolARModuleTools"  description="SolARModuleTools"  path="$XPCF_MODULE_ROOT/SolARBuild/SolARModuleTools/0.11.0/lib/x86_64/shared">
-		<component uuid="31fa26d6-9744-4522-85fa-fc2baafbe397" name="SolAFiducialMarkersDetector" description="SolAFiducialMarkersDetector">
+		<component uuid="31fa26d6-9744-4522-85fa-fc2baafbe397" name="SolARFiducialMarkersDetector" description="SolARFiducialMarkersDetector">
 			<interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
 			<interface uuid="607d0b0d-766d-4ff2-9b72-45c555f9726f" name="I2DTrackablesDetector" description="I2DTrackablesDetector"/>
 		</component>
@@ -93,7 +93,7 @@
 			<property name="videoPath" type="string" value="path to video"/>
 			<property name="delayTime" type="int" value="33"/>
 		</configure>
-		<configure component="SolAFiducialMarkersDetector">
+		<configure component="SolARFiducialMarkersDetector">
             <property name="nbThreshold" type="int" value="4"/>
 			<property name="minThreshold" type="int" value="-1"/>
 			<property name="maxThreshold" type="int" value="220"/>

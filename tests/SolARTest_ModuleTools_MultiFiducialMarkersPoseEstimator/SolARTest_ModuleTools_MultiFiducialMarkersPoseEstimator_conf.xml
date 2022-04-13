@@ -5,7 +5,7 @@
 			<interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
 			<interface uuid="f22cede0-e638-403f-9dfc-d2c1bd15cf83" name="IMultiTrackablesPose" description="IMultiTrackablesPose"/>
 		</component>
-		<component uuid="31fa26d6-9744-4522-85fa-fc2baafbe397" name="SolAFiducialMarkersDetector" description="SolAFiducialMarkersDetector">
+		<component uuid="31fa26d6-9744-4522-85fa-fc2baafbe397" name="SolARFiducialMarkersDetector" description="SolARFiducialMarkersDetector">
 			<interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
 			<interface uuid="607d0b0d-766d-4ff2-9b72-45c555f9726f" name="I2DTrackablesDetector" description="I2DTrackablesDetector"/>
 		</component>
@@ -116,7 +116,7 @@
 		<configure component="SolARMultiFiducialMarkersPoseEstimator">
             <property name="maxReprojError" type="float" value="2.0"/>
         </configure>
-		<configure component="SolAFiducialMarkersDetector">
+		<configure component="SolARFiducialMarkersDetector">
             <property name="nbThreshold" type="int" value="4"/>
 			<property name="minThreshold" type="int" value="-1"/>
 			<property name="maxThreshold" type="int" value="220"/>

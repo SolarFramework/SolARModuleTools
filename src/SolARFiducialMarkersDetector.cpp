@@ -20,7 +20,7 @@
 
 namespace xpcf = org::bcom::xpcf;
 
-XPCF_DEFINE_FACTORY_CREATE_INSTANCE(SolAR::MODULES::TOOLS::SolAFiducialMarkersDetector);
+XPCF_DEFINE_FACTORY_CREATE_INSTANCE(SolAR::MODULES::TOOLS::SolARFiducialMarkersDetector);
 
 
 namespace SolAR {
@@ -29,7 +29,7 @@ namespace MODULES {
 namespace TOOLS {
 
 
-SolAFiducialMarkersDetector::SolAFiducialMarkersDetector():ConfigurableBase(xpcf::toUUID<SolAFiducialMarkersDetector>())
+SolARFiducialMarkersDetector::SolARFiducialMarkersDetector():ConfigurableBase(xpcf::toUUID<SolARFiducialMarkersDetector>())
 {
     addInterface<SolAR::api::features::I2DTrackablesDetector>(this);
     declareInjectable<SolAR::api::image::IImageFilter>(m_imageFilterBinary);
@@ -47,7 +47,7 @@ SolAFiducialMarkersDetector::SolAFiducialMarkersDetector():ConfigurableBase(xpcf
     LOG_DEBUG("SolAFiducialMarkersDetector constructor");
 }
 
-FrameworkReturnCode SolAFiducialMarkersDetector::setTrackables(const std::vector<SRef<SolAR::datastructure::Trackable>> trackables)
+FrameworkReturnCode SolARFiducialMarkersDetector::setTrackables(const std::vector<SRef<SolAR::datastructure::Trackable>> trackables)
 {
     // components initialisation for marker detection
 	m_nbMarkers = trackables.size();
@@ -72,8 +72,8 @@ FrameworkReturnCode SolAFiducialMarkersDetector::setTrackables(const std::vector
     return FrameworkReturnCode::_SUCCESS;
 }
 
-FrameworkReturnCode SolAFiducialMarkersDetector::detect(const SRef<SolAR::datastructure::Image> image,
-                                                        std::vector<std::vector<SolAR::datastructure::Point2Df>> & corners)
+FrameworkReturnCode SolARFiducialMarkersDetector::detect(const SRef<SolAR::datastructure::Image> image,
+                                                         std::vector<std::vector<SolAR::datastructure::Point2Df>> & corners)
 {		
     corners.resize(m_nbMarkers);
 	SRef<Image> greyImage;

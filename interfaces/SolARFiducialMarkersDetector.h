@@ -34,7 +34,7 @@ namespace MODULES {
 namespace TOOLS {
 
 /**
-* @class SolAFiducialMarkersDetector
+* @class SolARFiducialMarkersDetector
 * @brief <B>Detect a set of given 2D fiducial markers in an image.</B>
 * <TT>UUID: 31fa26d6-9744-4522-85fa-fc2baafbe397</TT>
 *
@@ -64,14 +64,14 @@ namespace TOOLS {
 *
 */
 
-class SOLAR_TOOLS_EXPORT_API SolAFiducialMarkersDetector : public org::bcom::xpcf::ConfigurableBase,
+class SOLAR_TOOLS_EXPORT_API SolARFiducialMarkersDetector : public org::bcom::xpcf::ConfigurableBase,
     public SolAR::api::features::I2DTrackablesDetector
 {
 public:
-    ///@brief SolAFiducialMarkersDetector constructor;
-    SolAFiducialMarkersDetector();
-    ///@brief SolAFiducialMarkersDetector destructor;
-    ~SolAFiducialMarkersDetector() = default;
+    ///@brief SolARFiducialMarkersDetector constructor;
+    SolARFiducialMarkersDetector();
+    ///@brief SolARFiducialMarkersDetector destructor;
+    ~SolARFiducialMarkersDetector() = default;
 
     /// @brief this method is used to set the set of 2D trackables.
     /// @param[in] trackables the set of 2D trackables.
