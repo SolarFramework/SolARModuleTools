@@ -39,12 +39,20 @@ SolARSLAMMapping::SolARSLAMMapping() :ConfigurableBase(xpcf::toUUID<SolARSLAMMap
 	declareInjectable<api::storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
 	declareInjectable<api::reloc::IKeyframeRetriever>(m_keyframeRetriever);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
-	declareInjectable<api::solver::map::IMapFilter>(m_mapFilter);
+    declareInjectable<api::solver::map::IMapFilter>(m_mapFilterMono, "mono");
+    declareInjectable<api::solver::map::IMapFilter>(m_mapFilterStereo, "stereo");
 	declareInjectable<api::features::IDescriptorMatcherGeometric>(m_matcher);
 	declareProperty("minWeightNeighbor", m_minWeightNeighbor);
 	declareProperty("maxNbNeighborKfs", m_maxNbNeighborKfs);
 	declareProperty("saveImage", m_isSaveImage);
 	LOG_DEBUG("SolARSLAMMapping constructor");
+}
+
+void SolARSLAMMapping::onInjected()
+{
+    LOG_DEBUG("SolARSLAMMapping::onInjected");
+    // set min triangulation angle parameter of stereo filter to 0
+    m_mapFilterStereo->bindTo<xpcf::IConfigurable>()->getProperty("minTriangulationAngle")->setFloatingValue(0);
 }
 
 void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
@@ -156,7 +164,7 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 		float tmpKfMedDepth;
 		{
 			std::vector<float> depths;
-			Transform3Df tmpKfPoseInv = tmpKf_pose.inverse();
+            Transform3Df tmpKfPoseInv = tmpKf_pose.inverse();
 			for (const auto& it : tmpMapVisibility) {
 				SRef<CloudPoint> cp;
 				if (m_pointCloudManager->getPoint(it.second, cp) != FrameworkReturnCode::_SUCCESS)
@@ -191,21 +199,19 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 		if (goodMatches.size() == 0)
 			continue;
 		
-		// triangulation		
-		// check baseline: if baseline is very short, 3D points are defined by using only depth information of keypoints 
-		std::vector<SRef<CloudPoint>> tmpCloudPoint;
-		if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02)
+        // triangulation and fitler cloud points
+		// check baseline: if baseline is very short, 3D points are defined by using only depth information of keypoints         
+        std::vector<SRef<CloudPoint>> tmpCloudPoint, tmpFilteredCloudPoint;
+        std::vector<int> indexFiltered;
+        if ((tmpKf_pose.translation() - newKf_pose.translation()).norm() / tmpKfMedDepth < 0.02){
 			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, true);
-		else
+            m_mapFilterStereo->filter(newKf_pose, tmpKf_pose, tmpCloudPoint, tmpFilteredCloudPoint, indexFiltered);
+        }
+        else {
 			m_triangulator->triangulate(keyframe, tmpKf, goodMatches, std::make_pair(keyframe->getId(), idxBestNeighborKfs[i]), tmpCloudPoint, false);
-		if (tmpCloudPoint.size() == 0)
-			continue;
-
-		// filter cloud points
-		std::vector<SRef<CloudPoint>> tmpFilteredCloudPoint;
-		std::vector<int> indexFiltered;
-		if (tmpCloudPoint.size() > 0)
-			m_mapFilter->filter(newKf_pose, tmpKf_pose, tmpCloudPoint, tmpFilteredCloudPoint, indexFiltered);
+            m_mapFilterMono->filter(newKf_pose, tmpKf_pose, tmpCloudPoint, tmpFilteredCloudPoint, indexFiltered);
+        }
+        LOG_DEBUG("Filtered points / triangulated points: {} / {}", tmpFilteredCloudPoint.size(), tmpCloudPoint.size());
 		for (int i = 0; i < indexFiltered.size(); ++i) {
 			checkMatches[goodMatches[indexFiltered[i]].getIndexInDescriptorA()] = true;
 			cloudPoint.push_back(tmpFilteredCloudPoint[i]);

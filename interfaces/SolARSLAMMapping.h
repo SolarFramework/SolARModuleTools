@@ -86,6 +86,9 @@ public:
     /// @param[out] keyframe: new keyframe or new reference keyframe found.
     FrameworkReturnCode process(const SRef<SolAR::datastructure::Frame> frame, SRef<SolAR::datastructure::Keyframe> & keyframe) override;
 
+    /// @brief Method called when all component injections have been done
+    void onInjected() override;
+
 	void unloadComponent() override final;
 
 private:
@@ -107,7 +110,7 @@ private:
     SRef<SolAR::api::storage::IMapManager>                                      m_mapManager;
     SRef<SolAR::api::storage::IPointCloudManager>								m_pointCloudManager;
     SRef<SolAR::api::solver::map::ITriangulator>								m_triangulator;
-    SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilter;
+    SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilterMono, m_mapFilterStereo;
     SRef<SolAR::api::features::IDescriptorMatcherGeometric>						m_matcher;
 	std::map<uint32_t, std::pair<SRef<SolAR::datastructure::CloudPoint>, uint32_t>>	m_recentAddedCloudPoints;
 };
