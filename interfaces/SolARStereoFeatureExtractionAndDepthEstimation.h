@@ -17,8 +17,7 @@
 #ifndef SOLARSTEREOFEATUREEXTRACTIONANDDEPTHESTIMATION_H
 #define SOLARSTEREOFEATUREEXTRACTIONANDDEPTHESTIMATION_H
 #include "api/features/IFeatureWithDepthFromStereo.h"
-#include "api/features/IKeypointDetector.h"
-#include "api/features/IDescriptorsExtractor.h"
+#include "api/features/IDescriptorsExtractorFromImage.h"
 #include "api/geom/IUndistortPoints.h"
 #include "api/geom/I2DPointsRectification.h"
 #include "api/features/IDescriptorMatcherStereo.h"
@@ -37,8 +36,7 @@ namespace TOOLS {
 * <TT>UUID: d015129a-6dff-448c-bf02-66f461ff401e</TT>
 *
 * @SolARComponentInjectablesBegin
-* @SolARComponentInjectable{SolAR::api::features::IKeypointDetector}
-* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractor}
+* @SolARComponentInjectable{SolAR::api::features::IDescriptorsExtractorFromImage}
 * @SolARComponentInjectable{SolAR::api::geom::IUndistortPoints}
 * @SolARComponentInjectable{SolAR::geom::I2DPointsRectification}
 * @SolARComponentInjectable{SolAR::features::IDescriptorMatcherStereo}
@@ -90,8 +88,7 @@ private:
 						SRef<datastructure::DescriptorBuffer>& descriptors);
 
 private:
-	std::vector<SRef<SolAR::api::features::IKeypointDetector>>		m_keypointsDetector;
-	std::vector<SRef<SolAR::api::features::IDescriptorsExtractor>>	m_descriptorExtractor;
+    std::vector<SRef<SolAR::api::features::IDescriptorsExtractorFromImage>>	m_descriptorExtractor;
 	std::vector<SRef<SolAR::api::geom::IUndistortPoints>>			m_undistortPoints;
     std::vector<SRef<SolAR::api::geom::I2DPointsRectification>>     m_stereoRectificator;
     SRef<SolAR::api::features::IDescriptorMatcherStereo>            m_stereoMatcher;
@@ -101,6 +98,7 @@ private:
 	std::vector<SolAR::datastructure::RectificationParameters>		m_rectParams;
 	bool															m_isSetParams = false;
 	std::vector<bool>												m_isPassRectify;
+    int                                                             m_isMultithreading = 1;
 };
 
 }
