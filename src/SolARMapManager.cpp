@@ -467,6 +467,56 @@ FrameworkReturnCode SolARMapManager::loadFromFile()
 	return FrameworkReturnCode::_SUCCESS;
 }
 
+FrameworkReturnCode SolARMapManager::deleteFile()
+{
+    LOG_INFO("Deleting the map files...");
+    LOG_DEBUG("Delete identification");
+    if (boost::filesystem::remove(m_directory + "/" + m_identificationFileName)) {
+        LOG_DEBUG("Identification file deleted");
+    }
+    else {
+        LOG_DEBUG("No identification file to delete");
+    }
+    LOG_DEBUG("Delete coordinate system");
+    if (boost::filesystem::remove(m_directory + "/" + m_coordinateFileName)) {
+        LOG_DEBUG("Coordinate system file deleted");
+    }
+    else {
+        LOG_DEBUG("No coordinate system file to delete");
+    }
+    LOG_DEBUG("Delete point cloud manager");
+    if (boost::filesystem::remove(m_directory + "/" + m_pcManagerFileName)) {
+        LOG_DEBUG("Point cloud manager file deleted");
+    }
+    else {
+        LOG_DEBUG("No point cloud manager file to delete");
+    }
+    LOG_DEBUG("Delete keyframes manager");
+    if (boost::filesystem::remove(m_directory + "/" + m_kfManagerFileName)) {
+        LOG_DEBUG("Keyframes manager file deleted");
+    }
+    else {
+        LOG_DEBUG("No keyframes manager file to delete");
+    }
+    LOG_DEBUG("Delete covisibility graph");
+    if (boost::filesystem::remove(m_directory + "/" + m_covisGraphFileName)) {
+        LOG_DEBUG("Covisibility graph file deleted");
+    }
+    else {
+        LOG_DEBUG("No covisibility graph file to delete");
+    }
+    LOG_DEBUG("Delete keyframe retriever");
+    if (boost::filesystem::remove(m_directory + "/" + m_kfRetrieverFileName)) {
+        LOG_DEBUG("Keyframe retriever file deleted");
+    }
+    else {
+        LOG_DEBUG("No keyframe retriever file to delete");
+    }
+    LOG_INFO("Deletion done!");
+
+    return FrameworkReturnCode::_SUCCESS;
+}
+
 
 }
 }

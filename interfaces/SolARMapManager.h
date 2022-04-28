@@ -137,14 +137,18 @@ public:
 	int keyframePruning(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes = {}) override;
 
 	/// @brief Save the map to the external file
-	/// @return FrameworkReturnCode::_SUCCESS_ if the suppression succeed, else FrameworkReturnCode::_ERROR.
+    /// @return FrameworkReturnCode::_SUCCESS_ if the backup succeeds, else FrameworkReturnCode::_ERROR.
     FrameworkReturnCode saveToFile() const override;
 
 	/// @brief Load the map from the external file
-	/// @return FrameworkReturnCode::_SUCCESS_ if the suppression succeed, else FrameworkReturnCode::_ERROR.
+    /// @return FrameworkReturnCode::_SUCCESS_ if the loading succeeds, else FrameworkReturnCode::_ERROR.
 	FrameworkReturnCode loadFromFile() override;
 
-	org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
+    /// @brief Delete the map in external file
+    /// @return FrameworkReturnCode::_SUCCESS_ if the deletion succeeds, else FrameworkReturnCode::_ERROR.
+    FrameworkReturnCode deleteFile() override;
+
+    org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
     void unloadComponent () override final;	
 
 private:
