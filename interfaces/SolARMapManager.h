@@ -92,12 +92,21 @@ public:
 								  uint32_t nbKeyframes,
 								  SRef<SolAR::datastructure::Map> & submap) override;
 
+    /// @brief Get local point cloud seen from the keyframes
+    /// @param[in] keyframes the keyframes to get local point cloud
+    /// @param[out] localPointCloud the local point cloud seen by the keyframes
+    /// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode getLocalPointCloud(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes,
+                                           std::vector<SRef<SolAR::datastructure::CloudPoint>> &localPointCloud) const override;
+
 	/// @brief Get local point cloud seen from the keyframe and its neighbors
 	/// @param[in] keyframe the keyframe to get local point cloud
 	/// @param[in] minWeightNeighbor the weight to get keyframe neighbors
 	/// @param[out] localPointCloud the local point cloud
 	/// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
-    FrameworkReturnCode getLocalPointCloud(const SRef<SolAR::datastructure::Keyframe> keyframe, const float minWeightNeighbor, std::vector<SRef<SolAR::datastructure::CloudPoint>> &localPointCloud) const override;
+    FrameworkReturnCode getLocalPointCloud(const SRef<SolAR::datastructure::Keyframe> keyframe,
+                                           const float minWeightNeighbor,
+                                           std::vector<SRef<SolAR::datastructure::CloudPoint>> &localPointCloud) const override;
 
 	/// @brief Add a point cloud to map manager and update visibility of keyframes and covisibility graph
 	/// @param[in] cloudPoint the cloud point to add to the map manager
@@ -128,14 +137,18 @@ public:
 	int keyframePruning(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes = {}) override;
 
 	/// @brief Save the map to the external file
-	/// @return FrameworkReturnCode::_SUCCESS_ if the suppression succeed, else FrameworkReturnCode::_ERROR.
+    /// @return FrameworkReturnCode::_SUCCESS_ if the backup succeeds, else FrameworkReturnCode::_ERROR.
     FrameworkReturnCode saveToFile() const override;
 
 	/// @brief Load the map from the external file
-	/// @return FrameworkReturnCode::_SUCCESS_ if the suppression succeed, else FrameworkReturnCode::_ERROR.
+    /// @return FrameworkReturnCode::_SUCCESS_ if the loading succeeds, else FrameworkReturnCode::_ERROR.
 	FrameworkReturnCode loadFromFile() override;
 
-	org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
+    /// @brief Delete the map in external file
+    /// @return FrameworkReturnCode::_SUCCESS_ if the deletion succeeds, else FrameworkReturnCode::_ERROR.
+    FrameworkReturnCode deleteFile() override;
+
+    org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
     void unloadComponent () override final;	
 
 private:

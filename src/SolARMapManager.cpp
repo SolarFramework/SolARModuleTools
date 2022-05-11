@@ -183,37 +183,49 @@ FrameworkReturnCode SolARMapManager::getSubmap(uint32_t idCenteredKeyframe, uint
 	return FrameworkReturnCode::_SUCCESS;
 }
 
-FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> keyframe, const float minWeightNeighbor, std::vector<SRef<CloudPoint>>& localPointCloud) const
+FrameworkReturnCode SolARMapManager::getLocalPointCloud(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes,
+                                                        std::vector<SRef<SolAR::datastructure::CloudPoint>> &localPointCloud) const
+{
+    // get all cloud point visibilities from keyframes
+    std::map<uint32_t, std::map<uint32_t, uint32_t>> idxLocalMap;
+    for (auto const & it : keyframes) {
+        std::map<uint32_t, uint32_t> visibility = it->getVisibility();
+        for (auto const &v : visibility)
+            idxLocalMap[v.second][it->getId()] = v.first;
+    }
+    // get local point cloud
+    for (auto const &it : idxLocalMap) {
+        SRef<CloudPoint> point;
+        if (m_pointCloudManager->getPoint(it.first, point) == FrameworkReturnCode::_SUCCESS)
+            localPointCloud.push_back(point);
+        else {
+            for (auto const &v : it.second) {
+                SRef<Keyframe> keyframe;
+                if (m_keyframesManager->getKeyframe(v.first, keyframe) != FrameworkReturnCode::_SUCCESS)
+                    continue;
+                keyframe->removeVisibility(v.second, it.first);
+            }
+        }
+    }
+    return FrameworkReturnCode::_SUCCESS;
+}
+
+FrameworkReturnCode SolARMapManager::getLocalPointCloud(const SRef<Keyframe> keyframe,
+                                                        const float minWeightNeighbor,
+                                                        std::vector<SRef<CloudPoint>>& localPointCloud) const
 {	
 	// get neighbor keyframes of the keyframe
 	std::vector<uint32_t> neighKeyframesId;
 	m_covisibilityGraphManager->getNeighbors(keyframe->getId(), minWeightNeighbor, neighKeyframesId);
-	neighKeyframesId.push_back(keyframe->getId());
-	// get all cloud point visibilities from keyframes
-	std::map<uint32_t, std::map<uint32_t, uint32_t>> tmpIdxLocalMap;
+    // get keyframes
+    std::vector<SRef<Keyframe>> keyframes;
 	for (auto const &it : neighKeyframesId) {
 		SRef<Keyframe> keyframe;
-		if (m_keyframesManager->getKeyframe(it, keyframe) != FrameworkReturnCode::_SUCCESS)
-			continue;
-		const std::map<uint32_t, uint32_t> &visibility = keyframe->getVisibility();
-		for (auto const &v : visibility)
-			tmpIdxLocalMap[v.second][it] = v.first;
+        if (m_keyframesManager->getKeyframe(it, keyframe) == FrameworkReturnCode::_SUCCESS)
+            keyframes.push_back(keyframe);
 	}
-	// get local point cloud
-	for (auto const &it : tmpIdxLocalMap) {
-		SRef<CloudPoint> point;
-		if (m_pointCloudManager->getPoint(it.first, point) == FrameworkReturnCode::_SUCCESS)
-			localPointCloud.push_back(point);
-		else {
-			for (auto const &v : it.second) {
-				SRef<Keyframe> keyframe;
-				if (m_keyframesManager->getKeyframe(v.first, keyframe) != FrameworkReturnCode::_SUCCESS)
-					continue;
-				keyframe->removeVisibility(v.second, it.first);
-			}
-		}
-	}
-	return FrameworkReturnCode::_SUCCESS;
+    keyframes.push_back(keyframe);
+    return getLocalPointCloud(keyframes, localPointCloud);
 }
 
 FrameworkReturnCode SolARMapManager::addCloudPoint(const SRef<CloudPoint> cloudPoint)
@@ -453,6 +465,56 @@ FrameworkReturnCode SolARMapManager::loadFromFile()
 	}
 	LOG_INFO("Load done!");
 	return FrameworkReturnCode::_SUCCESS;
+}
+
+FrameworkReturnCode SolARMapManager::deleteFile()
+{
+    LOG_INFO("Deleting the map files...");
+    LOG_DEBUG("Delete identification");
+    if (boost::filesystem::remove(m_directory + "/" + m_identificationFileName)) {
+        LOG_DEBUG("Identification file deleted");
+    }
+    else {
+        LOG_DEBUG("No identification file to delete");
+    }
+    LOG_DEBUG("Delete coordinate system");
+    if (boost::filesystem::remove(m_directory + "/" + m_coordinateFileName)) {
+        LOG_DEBUG("Coordinate system file deleted");
+    }
+    else {
+        LOG_DEBUG("No coordinate system file to delete");
+    }
+    LOG_DEBUG("Delete point cloud manager");
+    if (boost::filesystem::remove(m_directory + "/" + m_pcManagerFileName)) {
+        LOG_DEBUG("Point cloud manager file deleted");
+    }
+    else {
+        LOG_DEBUG("No point cloud manager file to delete");
+    }
+    LOG_DEBUG("Delete keyframes manager");
+    if (boost::filesystem::remove(m_directory + "/" + m_kfManagerFileName)) {
+        LOG_DEBUG("Keyframes manager file deleted");
+    }
+    else {
+        LOG_DEBUG("No keyframes manager file to delete");
+    }
+    LOG_DEBUG("Delete covisibility graph");
+    if (boost::filesystem::remove(m_directory + "/" + m_covisGraphFileName)) {
+        LOG_DEBUG("Covisibility graph file deleted");
+    }
+    else {
+        LOG_DEBUG("No covisibility graph file to delete");
+    }
+    LOG_DEBUG("Delete keyframe retriever");
+    if (boost::filesystem::remove(m_directory + "/" + m_kfRetrieverFileName)) {
+        LOG_DEBUG("Keyframe retriever file deleted");
+    }
+    else {
+        LOG_DEBUG("No keyframe retriever file to delete");
+    }
+    LOG_INFO("Deletion done!");
+
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 

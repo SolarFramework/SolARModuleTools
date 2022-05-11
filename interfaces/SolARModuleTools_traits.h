@@ -58,7 +58,9 @@ class SolARStereoDepthEstimation;
 class SolARStereoFeatureExtractionAndDepthEstimation;
 class SolARStereoBootstrapper;
 class SolARStereoReprojection;
-
+class SolARWorldGraphLoader;
+class SolARMultiFiducialMarkersPoseEstimator;
+class SolARFiducialMarkersDetector;
 }
 }
 }
@@ -212,6 +214,18 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARStereoReprojection,
                             "6f0c5373-1b00-41ce-ab1b-a845b83f65b3",
                             "SolARStereoReprojection",
                             "Reproject keypoints with estimating depth to 3D cloud points.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARWorldGraphLoader,
+                            "8ee6aa50-f6bb-4b01-a1fe-727b54ed0457",
+                            "SolARWorldGraphLoader",
+                            "Loads a world graph of trackables.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARMultiFiducialMarkersPoseEstimator,
+                            "9a4521de-2ea5-48f4-97ba-7e698a426076",
+                            "SolARMultiFiducialMarkersPoseEstimator",
+                            "Estimate camera pose based on a set of fiducial markers.")
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARFiducialMarkersDetector,
+                            "31fa26d6-9744-4522-85fa-fc2baafbe397",
+                            "SolARFiducialMarkersDetector",
+                            "Detect a set of given 2D fiducial markers in an image.")
 							
 
 #endif // SOLARMODULETOOLS_TRAITS_H
