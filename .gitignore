@@ -6,8 +6,8 @@
 *.lo
 *.o
 *.obj
-build/
-tests/build*
+.build-rules/
+tests/*/.build-rules/
 
 # Precompiled Headers
 *.gch
