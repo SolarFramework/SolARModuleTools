@@ -53,13 +53,6 @@ xpcf::XPCFErrorCode SolARSLAMBootstrapper::onConfigured()
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
-void SolARSLAMBootstrapper::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_triangulator->setCameraParameters(m_camMatrix, m_camDistortion);
-	m_poseFinderFrom2D2D->setCameraParameters(m_camMatrix, m_camDistortion);
-}
-
 inline float angleCamDistance(const Transform3Df & pose1, const Transform3Df & pose2) {
 	return std::acos(pose1(0, 2) * pose2(0, 2) + pose1(1, 2) * pose2(1, 2) + pose1(2, 2) * pose2(2, 2));
 }
@@ -76,7 +69,7 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 	
 	if (!m_initKeyframe1) {
 		// init first keyframe
-		m_initKeyframe1 = true;		
+        m_initKeyframe1 = true;
         m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 	}
 	else {
@@ -96,15 +89,16 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 			// Find pose of the second keyframe if not has pose
 			if (!m_hasPose) {
 				Transform3Df pose;
-                m_poseFinderFrom2D2D->estimate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getPose(), pose, matches);
+                m_poseFinderFrom2D2D->estimate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getCameraParameters(), m_keyframe1->getPose(), pose, matches);
 				frame->setPose(pose);
 			}
 			if (angleCamDistance(m_keyframe1->getPose(), frame->getPose()) > m_angleThres)
 				return FrameworkReturnCode::_ERROR_;
 			// Triangulate
 			std::vector<SRef<CloudPoint>> cloud, filteredCloud;
-            m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getDescriptors(), frame->getDescriptors(), matches,
-				std::make_pair(0, 1), m_keyframe1->getPose(), frame->getPose(), cloud);
+            m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), 
+				m_keyframe1->getDescriptors(), frame->getDescriptors(), matches, std::make_pair(0, 1), 
+				m_keyframe1->getPose(), frame->getPose(), m_keyframe1->getCameraParameters(), frame->getCameraParameters(), cloud);
 			// Filter cloud points
 			m_mapFilter->filter(m_keyframe1->getPose(), frame->getPose(), cloud, filteredCloud);
 			if (filteredCloud.size() > m_nbMinInitPointCloud) {

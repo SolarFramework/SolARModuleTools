@@ -42,13 +42,6 @@ SolAR3DTransformEstimationSACFrom3D3D::SolAR3DTransformEstimationSACFrom3D3D() :
 	LOG_DEBUG(" SolAR3DTransformEstimationSACFrom3D3D constructor");
 }
 
-void SolAR3DTransformEstimationSACFrom3D3D::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams)
-{
-	m_intrinsicParams = intrinsicParams;
-	m_distortionParams = distortionParams;
-	m_projector->setCameraParameters(intrinsicParams, distortionParams);
-}
-
 void randomIndices(int maxIndex, int nbIndices, std::vector<int> &indices) {
 	while (indices.size() != nbIndices) {
 		int index = rand() % maxIndex;
@@ -248,8 +241,8 @@ FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const SRef<K
 		m_transform3D->transform(secondPoints3D, tmpPose.inverse(), secondPoints3DTrans);
 		// project the 3D tranformed points on the image
 		std::vector< Point2Df > firstProjected2DPts, secondProjected2DPts;
-		m_projector->project(firstPoints3DTrans, firstProjected2DPts, pose2);
-		m_projector->project(secondPoints3DTrans, secondProjected2DPts, pose1);
+		m_projector->project(firstPoints3DTrans, pose2, secondKeyframe->getCameraParameters(), firstProjected2DPts);
+		m_projector->project(secondPoints3DTrans, pose1, firstKeyframe->getCameraParameters(), secondProjected2DPts);
 		// get inliers
 		std::vector<int> tmpInliers;
 		getInliersByProject(firstProjected2DPts, keypoints2, secondProjected2DPts, keypoints1, m_reprojError, tmpInliers);
@@ -282,7 +275,7 @@ FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const SRef<K
 		return FrameworkReturnCode::_ERROR_;
 	inliers.swap(bestInliers);
 	if (m_optimizeSim3)
-		m_bundler->optimizeSim3(m_intrinsicParams, m_intrinsicParams, firstKeyframe, secondKeyframe, bestMatches, bestPts3D1, bestPts3D2, pose);
+		m_bundler->optimizeSim3(firstKeyframe, secondKeyframe, bestMatches, bestPts3D1, bestPts3D2, pose);
 	return FrameworkReturnCode::_SUCCESS;
 }
 

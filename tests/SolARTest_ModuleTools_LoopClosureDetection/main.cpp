@@ -64,8 +64,6 @@ int main(int argc,char** argv)
 	auto transform3D = xpcfComponentManager->resolve<geom::I3DTransform>();
 	auto viewer3DPoints = xpcfComponentManager->resolve<display::I3DPointsViewer>();
 
-	loopDetector->setCameraParameters(camera->getIntrinsicsParameters(), camera->getDistortionParameters());
-
 	// Load map from file
 	if (mapManager->loadFromFile() != FrameworkReturnCode::_SUCCESS) {
 		LOG_INFO("Cannot load map");

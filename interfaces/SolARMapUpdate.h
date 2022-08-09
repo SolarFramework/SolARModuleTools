@@ -52,10 +52,6 @@ public:
 	SolARMapUpdate();
 	~SolARMapUpdate() = default;
 
-    /// @brief this method is used to set intrinsic parameters and distorsion of the camera
-    /// @param[in] camParams  Camera parameters.
-    void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
-
 	/// @brief Update the global map.
 	/// @param[in,out] globalMap the global map
 	/// @param[in] newKeyframeIds the ids of new keyframes.
@@ -84,7 +80,6 @@ private:
 	SRef<datastructure::CovisibilityGraph>          m_covisibilityGraph;
 	SRef<datastructure::PointCloud>                 m_pointCloud;
 	SRef<datastructure::KeyframeCollection>         m_keyframeCollection;
-    SolAR::datastructure::CameraParameters          m_camParams;
 	float											m_thresAngleViewDirection = 0.85f;
 	float											m_thresConfidence = 0.1f;    
 };

@@ -43,10 +43,6 @@ SolAROverlapDetector::SolAROverlapDetector():ConfigurableBase(xpcf::toUUID<SolAR
 	LOG_DEBUG("SolAROverlapDetector constructor");
 }
 
-void SolAROverlapDetector::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_estimator3D->setCameraParameters(intrinsicParams, distortionParams);
-}
-
 FrameworkReturnCode SolAROverlapDetector::detect(const SRef<datastructure::Map> globalMap,
                                                  const SRef<datastructure::Map> floatingMap,
                                                  Transform3Df & sim3Transform,
