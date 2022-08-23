@@ -43,16 +43,11 @@ SolARStereoBootstrapper::~SolARStereoBootstrapper()
     LOG_DEBUG("SolARStereoBootstrapper destructor");
 }
 
-void SolARStereoBootstrapper::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams)
-{
-	m_intrinsicParams = intrinsicParams;
-}
-
 FrameworkReturnCode SolARStereoBootstrapper::process(const SRef<SolAR::datastructure::Frame>& frame, SRef<SolAR::datastructure::Image>& view)
 {
 	view = frame->getView()->copy();
 	std::vector<SRef<CloudPoint>> cloudPoints;
-    m_stereoReprojector->reprojectToCloudPoints(frame, m_intrinsicParams, cloudPoints);
+    m_stereoReprojector->reprojectToCloudPoints(frame, frame->getCameraParameters().intrinsic, cloudPoints);
 	LOG_DEBUG("Number of estimated cloud points: {}", cloudPoints.size());
 	// draw to display
 	const std::vector<Keypoint>& undistortedKeypoints = frame->getUndistortedKeypoints();

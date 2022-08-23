@@ -68,12 +68,6 @@ int main(int argc,char** argv)
 	auto camera = xpcfComponentManager->resolve<input::devices::ICamera>();
 	auto viewer3DPoints = xpcfComponentManager->resolve<display::I3DPointsViewer>();
 
-	// set intrinsic parameters for loop detector and loop corrector component
-	CamCalibration camCalibration = camera->getIntrinsicsParameters();
-	CamDistortion camDistortion = camera->getDistortionParameters();
-	loopDetector->setCameraParameters(camera->getIntrinsicsParameters(), camera->getDistortionParameters());
-	loopCorrector->setCameraParameters(camera->getIntrinsicsParameters(), camera->getDistortionParameters());
-
 	// Load map from file
 	if (mapManager->loadFromFile() != FrameworkReturnCode::_SUCCESS) {
 		LOG_INFO("Cannot load map");
@@ -116,7 +110,7 @@ int main(int argc,char** argv)
             // performs loop correction
             loopCorrector->correct(currentKeyframe, detectedLoopKeyframe, sim3Transform, duplicatedPointsIndices);
             // loop optimization
-            bundler->bundleAdjustment(camCalibration, camDistortion);
+            bundler->bundleAdjustment();
             // map pruning
             mapManager->pointCloudPruning();
 			mapManager->keyframePruning();

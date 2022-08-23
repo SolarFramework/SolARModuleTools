@@ -45,10 +45,6 @@ SolARLoopClosureDetector::SolARLoopClosureDetector():ConfigurableBase(xpcf::toUU
 	LOG_DEBUG("SolARLoopClosureDetector constructor");
 }
 
-void SolARLoopClosureDetector::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_estimator3D->setCameraParameters(intrinsicParams, distortionParams);
-}
-
 FrameworkReturnCode SolARLoopClosureDetector::detect(const SRef<Keyframe> queryKeyframe,
                                                      SRef<Keyframe> & detectedLoopKeyframe,
                                                      Transform3Df & sim3Transform,

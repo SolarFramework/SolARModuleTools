@@ -65,14 +65,6 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
-void SolARSLAMTracking::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_pnpRansac->setCameraParameters(m_camMatrix, m_camDistortion);
-	m_pnp->setCameraParameters(m_camMatrix, m_camDistortion);
-	m_projector->setCameraParameters(m_camMatrix, m_camDistortion);	
-}
-
 void SolARSLAMTracking::setNewKeyframe(const SRef<SolAR::datastructure::Keyframe> newKeyframe)
 {
 	std::unique_lock<std::mutex> lock(m_newKeyframeMutex);
@@ -150,7 +142,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	bool bFindPose = framePose.isApprox(Transform3Df::Identity());
 	if (bFindPose) {
 		std::vector<uint32_t> inliers;
-		if (m_pnpRansac->estimate(pt2d, pt3d, inliers, framePose, m_lastPose) != FrameworkReturnCode::_SUCCESS)
+		if (m_pnpRansac->estimate(pt2d, pt3d, frame->getCameraParameters(), inliers, framePose, m_lastPose) != FrameworkReturnCode::_SUCCESS)
 			return FrameworkReturnCode::_ERROR_;
 		LOG_DEBUG("Estimated pose: \n {}", framePose.matrix());		
 		frame->setPose(framePose);	// Set the pose of the new frame
@@ -166,7 +158,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	// Define inlier/outlier of 2D-3D correspondences found by the reference keyframe
 	{
 		std::vector< Point2Df > pt3DProj;		
-		m_projector->project(pt3d, pt3DProj, framePose);
+		m_projector->project(pt3d, framePose, frame->getCameraParameters(), pt3DProj);
 		for (int i = 0; i < pt3DProj.size(); ++i) {
 			if ((pt2d[i] - pt3DProj[i]).norm() < m_reprojErrorThreshold) {
 				idxCPSeen.insert(corres2D3D[i].second->getId());
@@ -196,7 +188,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		//  projection points and filter point out of frame
 		if (localMapUnseen.size() > 0) {
 			std::vector< Point2Df > projected2DPts;
-			m_projector->project(localMapUnseen, projected2DPts, frame->getPose());			
+			m_projector->project(localMapUnseen, frame->getPose(), frame->getCameraParameters(), projected2DPts);
 			for (int idx = 0; idx < projected2DPts.size(); idx++)
 				if ((projected2DPts[idx].getX() > 0) && (projected2DPts[idx].getX() < imgWidth) && (projected2DPts[idx].getY() > 0) && (projected2DPts[idx].getY() < imgHeight)) {
 					projected2DPtsCandidates.push_back(projected2DPts[idx]);
@@ -241,7 +233,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	// pnp optimization
 	if (bFindPose) {
 		Transform3Df refinedPose;
-		m_pnp->estimate(pts2dInliers, pts3dInliers, refinedPose, frame->getPose());
+		m_pnp->estimate(pts2dInliers, pts3dInliers, frame->getCameraParameters(), refinedPose, frame->getPose());
 		frame->setPose(refinedPose);
 	}
 	LOG_DEBUG("Refined pose: \n {}", frame->getPose().matrix());
@@ -271,7 +263,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 			if (m_keyframesManager->getKeyframe(idKf, tmpKf) != FrameworkReturnCode::_SUCCESS)
 				continue;
 			std::vector< Point2Df > tracked3DPtsProjected;
-			m_projector->project(tracked3Dpts, tracked3DPtsProjected, tmpKf->getPose());
+			m_projector->project(tracked3Dpts, tmpKf->getPose(), tmpKf->getCameraParameters(), tracked3DPtsProjected);
 			const Keypoint& tmpKp = tmpKf->getKeypoint(itVis->second);
 			for (const auto &it : tracked3DPtsProjected)
 				if ((it - tmpKp).norm() < updateWindows) {

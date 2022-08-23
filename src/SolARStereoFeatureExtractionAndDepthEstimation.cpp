@@ -59,8 +59,6 @@ void SolARStereoFeatureExtractionAndDepthEstimation::setRectificationParameters(
 	m_rectParams[1] = rectParams2;
 	m_camParams[0] = camParams1;
 	m_camParams[1] = camParams2;
-	for (int i = 0; i < 2; ++i)
-		m_undistortPoints[i]->setCameraParameters(m_camParams[i].intrinsic, m_camParams[i].distortion);
 	m_isSetParams = true;
 	m_isPassRectify.resize(2, false);
 	// No need rectify if rectification rotation parameter is identity
@@ -125,7 +123,7 @@ void SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify(int index
 {
     if (m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors) != FrameworkReturnCode::_SUCCESS)
         return;
-    m_undistortPoints[indexCamera]->undistort(keypoints, undistortedKeypoints);    
+    m_undistortPoints[indexCamera]->undistort(keypoints, m_camParams[indexCamera], undistortedKeypoints);
 	if (!m_isPassRectify[indexCamera])
 		m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, m_camParams[indexCamera], m_rectParams[indexCamera], undistortedRectifiedKeypoints);
 	else

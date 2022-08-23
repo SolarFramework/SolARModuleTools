@@ -42,12 +42,6 @@ SolARLoopCorrector::SolARLoopCorrector():ConfigurableBase(xpcf::toUUID<SolARLoop
 	LOG_DEBUG("SolARLoopCorrector constructor");
 }
 
-void SolARLoopCorrector::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_projector->setCameraParameters(intrinsicParams, distortionParams);
-}
-
 void SolARLoopCorrector::getLocalMapPoints(const std::map<uint32_t, SRef<Keyframe> > &connectedKfs, std::vector<SRef<CloudPoint>>& localMapPoints)
 {
 	// get ids of all cloud point visibilities from keyframes
@@ -158,7 +152,7 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 			}
 		// projection points
 		std::vector< Point2Df > projected2DPts;
-		m_projector->project(uncheckCurrentlocalCPs, projected2DPts, keyframe->getPose());
+		m_projector->project(uncheckCurrentlocalCPs, keyframe->getPose(), keyframe->getCameraParameters(), projected2DPts);
 		// Matching features
 		std::vector<DescriptorMatch> matches;
 		m_matcher->match(projected2DPts, desUncheckCurrentlocalCPs, keyframe, matches, 5.f);

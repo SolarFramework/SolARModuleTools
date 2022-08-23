@@ -73,10 +73,6 @@ public:
 	///@brief SolARSLAMMapping destructor;
 	~SolARSLAMMapping() = default;
 
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] camParams Camera parameters.
-	void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
-
     /// @brief check the mapping process is idle
     /// @return true if the mapping process is idle, else false
     bool idle() override;
@@ -103,7 +99,6 @@ private:
 	int																			m_isSaveImage = 0;
     bool                                                                        m_idle = true;
     std::mutex                                                                  m_mutexIdle;
-    SolAR::datastructure::CameraParameters										m_camParams;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;
     SRef<SolAR::api::reloc::IKeyframeRetriever>									m_keyframeRetriever;

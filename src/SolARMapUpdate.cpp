@@ -47,12 +47,6 @@ xpcf::XPCFErrorCode SolARMapUpdate::onConfigured()
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
-void SolARMapUpdate::setCameraParameters(const SolAR::datastructure::CameraParameters & camParams)
-{
-    m_camParams = camParams;
-    m_projector->setCameraParameters(camParams.intrinsic, camParams.distortion);
-}
-
 float SolARMapUpdate::cosineViewDirectionAngle(const SRef<Frame>& frame, const SRef<CloudPoint>& cloudPoint)
 {
 	const Transform3Df &pose = frame->getPose();
@@ -118,8 +112,8 @@ FrameworkReturnCode SolARMapUpdate::update(SRef<datastructure::Map> globalMap, c
 
 void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& localCloudPoints, SRef<Keyframe> newKeyframe, std::vector<SRef<CloudPoint>>& notMatchedCloudPoints)
 {
-    uint32_t imgWidth = m_camParams.resolution.width;
-    uint32_t imgHeight = m_camParams.resolution.height;
+    uint32_t imgWidth = newKeyframe->getCameraParameters().resolution.width;
+    uint32_t imgHeight = newKeyframe->getCameraParameters().resolution.height;
 	const std::map<uint32_t, uint32_t>& keyframeVisibilities = newKeyframe->getVisibility();
 	std::set<uint32_t> seenCPIds;
 	for (const auto& it : keyframeVisibilities)
@@ -134,7 +128,7 @@ void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& lo
 	std::vector< Point2Df > projected2DPtsCandidates;
 	if (localMapUnseen.size() > 0) {
 		std::vector< Point2Df > projected2DPts;
-		m_projector->project(localMapUnseen, projected2DPts, newKeyframe->getPose());
+		m_projector->project(localMapUnseen, newKeyframe->getPose(), newKeyframe->getCameraParameters(), projected2DPts);
 		for (int idx = 0; idx < projected2DPts.size(); idx++)
 			if ((projected2DPts[idx].getX() > 0) && (projected2DPts[idx].getX() < imgWidth) && (projected2DPts[idx].getY() > 0) && (projected2DPts[idx].getY() < imgHeight)) {
 				projected2DPtsCandidates.push_back(projected2DPts[idx]);
@@ -174,8 +168,8 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 {
 	if (notMatchedCloudPoints.size() == 0)
 		return;
-    uint32_t imgWidth = m_camParams.resolution.width;
-    uint32_t imgHeight = m_camParams.resolution.height;
+    uint32_t imgWidth = newKeyframe->getCameraParameters().resolution.width;
+    uint32_t imgHeight = newKeyframe->getCameraParameters().resolution.height;
 	float updateWindows = RATIO_UPDATE_WINDOWS * imgWidth;
 	float borderImage = RATIO_BORDER_IMAGE * imgWidth;
 	std::vector<Point2Df> pts2dInliers;
@@ -190,7 +184,7 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 		}
 	}
 	std::vector< Point2Df > projected2DPts;
-	m_projector->project(notMatchedCloudPoints, projected2DPts, newKeyframe->getPose());
+	m_projector->project(notMatchedCloudPoints, newKeyframe->getPose(), newKeyframe->getCameraParameters(), projected2DPts);
 	for (int i = 0; i < notMatchedCloudPoints.size(); ++i) {
 		if ((projected2DPts[i].getX() < borderImage) || (projected2DPts[i].getX() > imgWidth - borderImage) ||
 			(projected2DPts[i].getY() < borderImage) || (projected2DPts[i].getY() > imgHeight - borderImage))
@@ -213,7 +207,7 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 		if (m_keyframeCollection->getKeyframe(idKf, tmpKf) != FrameworkReturnCode::_SUCCESS)
 			continue;
 		std::vector< Point2Df > tracked3DPtsProjected;
-		m_projector->project(tracked3Dpts, tracked3DPtsProjected, tmpKf->getPose());
+		m_projector->project(tracked3Dpts, tmpKf->getPose(), tmpKf->getCameraParameters(), tracked3DPtsProjected);
 		const Keypoint& tmpKp = tmpKf->getKeypoint(itVis->second);
 		for (const auto &it : tracked3DPtsProjected)
 			if ((it - tmpKp).norm() < updateWindows) {

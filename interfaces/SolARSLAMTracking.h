@@ -80,11 +80,6 @@ public:
 	~SolARSLAMTracking() = default;
 
 	org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
-
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
 	
 	/// @brief this method is used to set new keyframe for tracking process
 	/// @param[in] newKeyframme the new keyframe
@@ -126,8 +121,6 @@ private:
     float                                                           m_ratioCPRefKeyframe = 0.6;
     std::mutex                                                      m_newKeyframeMutex;
     std::mutex                                                      m_needNewKeyframe;
-    SolAR::datastructure::CamCalibration                            m_camMatrix;
-    SolAR::datastructure::CamDistortion                             m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
     SRef<SolAR::api::features::IDescriptorMatcher>                  m_matcher;
     SRef<SolAR::api::features::IDescriptorMatcherRegion>            m_matcherRegion;

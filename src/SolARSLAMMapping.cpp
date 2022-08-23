@@ -55,11 +55,6 @@ void SolARSLAMMapping::onInjected()
     m_mapFilterStereo->bindTo<xpcf::IConfigurable>()->getProperty("minTriangulationAngle")->setFloatingValue(0);
 }
 
-void SolARSLAMMapping::setCameraParameters(const CameraParameters & camParams) {
-	m_camParams = camParams;
-	m_triangulator->setCameraParameters(m_camParams.intrinsic, m_camParams.distortion);
-}
-
 bool SolARSLAMMapping::idle()
 {
     std::unique_lock<std::mutex> lock(m_mutexIdle);
@@ -186,7 +181,7 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 
 		// Feature matching based on epipolar constraint
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
-		m_matcher->match(keyframe, tmpKf, m_camParams, tmpMatches, newKf_indexKeypoints);
+		m_matcher->match(keyframe, tmpKf, tmpMatches, newKf_indexKeypoints);
 
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {

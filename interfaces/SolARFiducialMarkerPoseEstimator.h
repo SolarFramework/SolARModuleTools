@@ -76,28 +76,26 @@ class SOLAR_TOOLS_EXPORT_API SolARFiducialMarkerPoseEstimator : public org::bcom
 public:
 	///@brief SolAR3DTransformEstimationFrom3D3D constructor;
 	SolARFiducialMarkerPoseEstimator();
+
 	///@brief SolAR3DTransformEstimationFrom3D3D destructor;
     ~SolARFiducialMarkerPoseEstimator() = default;
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-        /// @param[in] Camera calibration matrix parameters.
-        /// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;;
 
     /// @brief this method is used to set the trackable used to estimate the pose.
     /// @param[in] the trackable used to estimate the pose.
     FrameworkReturnCode setTrackable(const SRef<SolAR::datastructure::Trackable> trackable) override;
 
     /// @brief Estimates camera pose based on a fiducial marker.
-	/// @param[in] image: input image.
-	/// @param[out] pose: camera pose.
-	/// @return FrameworkReturnCode::_SUCCESS if the estimation succeed, else FrameworkReturnCode::_ERROR_
-    FrameworkReturnCode estimate(const SRef<SolAR::datastructure::Image> image, SolAR::datastructure::Transform3Df & pose) override;
+    /// @param[in] image input image.
+    /// @param[in] camParams the camera parameters.
+    /// @param[out] pose camera pose.
+    /// @return FrameworkReturnCode::_SUCCESS if the estimation succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode estimate(const SRef<SolAR::datastructure::Image> image,
+                                 const SolAR::datastructure::CameraParameters & camParams,
+                                 SolAR::datastructure::Transform3Df & pose) override;
 
 	void unloadComponent() override final;
 
 private:
-    SolAR::datastructure::CamCalibration						m_camMatrix;
-    SolAR::datastructure::CamDistortion                         m_camDistortion;
     SRef<SolAR::datastructure::FiducialMarker>                  m_fiducialMarker;
     SRef<SolAR::api::image::IImageFilter>						m_imageFilterBinary;
     SRef<SolAR::api::image::IImageConvertor>					m_imageConvertor;

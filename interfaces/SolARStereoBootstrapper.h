@@ -50,11 +50,6 @@ public:
     ///@brief SolARStereoBootstrapper destructor;
     ~SolARStereoBootstrapper() override;
 
-    /// @brief this method is used to set intrinsic parameters and distorsion of the camera
-    /// @param[in] Camera calibration matrix parameters.
-    /// @param[in] Camera distorsion parameters.
-    void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distortionParams) override;
-
 	/// @brief This method uses images to boostrap mapping
 	/// @param[in] frame input image to process
 	/// @param[out] view output image to visualize
@@ -66,7 +61,6 @@ public:
 
 private:
 	int													m_nbMinInitPointCloud = 50;
-	datastructure::CamCalibration						m_intrinsicParams;
     SRef<SolAR::api::geom::IReprojectionStereo>         m_stereoReprojector;
 	SRef<SolAR::api::storage::IMapManager>				m_mapManager;
 	SRef<SolAR::api::display::I2DOverlay>               m_overlay2DGreen, m_overlay2DRed;
