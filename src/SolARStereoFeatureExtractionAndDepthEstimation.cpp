@@ -115,6 +115,8 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
     // make frames
     frame1 = xpcf::utils::make_shared<Frame>(keypoints[0], undistortedKeypoints[0], descriptors[0], image1);
     frame2 = xpcf::utils::make_shared<Frame>(keypoints[1], undistortedKeypoints[1], descriptors[1], image2);
+    frame1->setCameraParameters(m_camParams[0]);
+    frame2->setCameraParameters(m_camParams[1]);
 
     return FrameworkReturnCode::_SUCCESS;
 }
