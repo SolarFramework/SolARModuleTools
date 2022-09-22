@@ -40,6 +40,7 @@ class SolARMapFilter;
 class SolARMapManager;
 class SolARBasicSink;
 class SolARBasicSource;
+class SolARCameraParametersManager;
 class SolARKeyframesManager;
 class SolARPointCloudManager;
 class SolARCovisibilityGraphManager;
@@ -125,6 +126,10 @@ XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARSBPatternReIndexer,
                              "SolARSBPatternReIndexer",
                              "SolAR::MODULES::TOOLS::SolARSBPatternReIndexer component")
 
+XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARCameraParametersManager,
+                             "e046cf87-d0a4-4c6f-af3d-18dc70881a34",
+                             "SolARCameraParametersManager",
+                             "A component to manage persistent camera parameters")
 
 XPCF_DEFINE_COMPONENT_TRAITS(SolAR::MODULES::TOOLS::SolARKeyframesManager,
                              "f94b4b51-b8f2-433d-b535-ebf1f54b4bf6",

@@ -90,6 +90,8 @@ public:
 	/// @param[out] inliers: indices of inlier correspondences.
     FrameworkReturnCode estimate(const SRef<SolAR::datastructure::Keyframe> firstKeyframe,
                                 const SRef<SolAR::datastructure::Keyframe> secondKeyframe,
+                                const SolAR::datastructure::CameraParameters & firstCameraParameters,
+                                const SolAR::datastructure::CameraParameters & secondCameraParameters,
 								const std::vector<SolAR::datastructure::DescriptorMatch> &matches,
 								const std::vector<SolAR::datastructure::Point3Df> & firstPoints3D,
 								const std::vector<SolAR::datastructure::Point3Df> & secondPoints3D,

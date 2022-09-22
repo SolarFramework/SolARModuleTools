@@ -34,6 +34,7 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::display::I2DOverlay}
 * @SolARComponentInjectable{SolAR::geom::IReprojectionStereo}
 * @SolARComponentInjectablesEnd
@@ -63,7 +64,8 @@ private:
 	int													m_nbMinInitPointCloud = 50;
     SRef<SolAR::api::geom::IReprojectionStereo>         m_stereoReprojector;
 	SRef<SolAR::api::storage::IMapManager>				m_mapManager;
-	SRef<SolAR::api::display::I2DOverlay>               m_overlay2DGreen, m_overlay2DRed;
+    SRef<SolAR::api::storage::ICameraParametersManager>	m_cameraParametersManager;
+    SRef<SolAR::api::display::I2DOverlay>               m_overlay2DGreen, m_overlay2DRed;
 };
 
 }

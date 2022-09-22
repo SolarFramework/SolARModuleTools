@@ -33,7 +33,9 @@ namespace TOOLS {
 SolARLoopClosureDetector::SolARLoopClosureDetector():ConfigurableBase(xpcf::toUUID<SolARLoopClosureDetector>())
 {
     addInterface<SolAR::api::loop::ILoopClosureDetector>(this);
-	declareInjectable<IKeyframesManager>(m_keyframesManager);
+    declareInjectable<IMapManager>(m_mapManager);
+    declareInjectable<ICameraParametersManager>(m_cameraParametersManager);
+    declareInjectable<IKeyframesManager>(m_keyframesManager);
     declareInjectable<ICovisibilityGraphManager>(m_covisibilityGraphManager);
 	declareInjectable<reloc::IKeyframeRetriever>(m_keyframeRetriever);
 	declareInjectable<solver::pose::I3DTransformSACFinderFrom3D3D>(m_estimator3D);
@@ -50,7 +52,7 @@ FrameworkReturnCode SolARLoopClosureDetector::detect(const SRef<Keyframe> queryK
                                                      Transform3Df & sim3Transform,
                                                      std::vector<std::pair<uint32_t, uint32_t>>& duplicatedPointsIndices) const
 {
-	uint32_t queryKeyframeId = queryKeyframe->getId();
+    uint32_t queryKeyframeId = queryKeyframe->getId();
 	std::vector<uint32_t> retKeyframesIndex;
 	std::vector<uint32_t> candidatesId;
 	// get candidate keyframes using BoW and covisibility graph
@@ -94,7 +96,18 @@ FrameworkReturnCode SolARLoopClosureDetector::detect(const SRef<Keyframe> queryK
 		}
 		Transform3Df pose;
 		std::vector<int> inliers;
-		if (m_estimator3D->estimate(queryKeyframe, it, foundMatches, pts1, pts2, pose, inliers) == FrameworkReturnCode::_SUCCESS) {
+        SRef<CameraParameters> camParamsQuery, camParamsCandidate;
+        if (m_cameraParametersManager->getCameraParameters(queryKeyframe->getCameraID(), camParamsQuery) != FrameworkReturnCode::_SUCCESS)
+        {
+            LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", queryKeyframe->getCameraID());
+            continue;
+        }
+        if (m_cameraParametersManager->getCameraParameters(it->getCameraID(), camParamsCandidate)!= FrameworkReturnCode::_SUCCESS)
+        {
+            LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", it->getCameraID());
+            continue;
+        }
+        if (m_estimator3D->estimate(queryKeyframe, it, *camParamsQuery, *camParamsCandidate, foundMatches, pts1, pts2, pose, inliers) == FrameworkReturnCode::_SUCCESS) {
 			if (inliers.size() > bestInliers.size()) {
 				bestTransform = pose;
 				bestDetectedLoopKeyframe = it;

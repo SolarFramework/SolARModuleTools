@@ -12,6 +12,7 @@ interfaces/SolARBasicMatchesFilter.h \
 interfaces/SolARKeyframeSelector.h \
 interfaces/SolARBasicSink.h \
 interfaces/SolARBasicSource.h \
+interfaces/SolARCameraParametersManager.h \
 interfaces/SolARPointCloudManager.h \
 interfaces/SolARKeyframesManager.h \
 interfaces/SolARCovisibilityGraphManager.h \
@@ -48,6 +49,7 @@ SOURCES += src/SolARImage2WorldMapper4Marker2D.cpp \
     src/SolARKeyframeSelector.cpp \
     src/SolARBasicSink.cpp \
     src/SolARBasicSource.cpp \
+    src/SolARCameraParametersManager.cpp \
     src/SolARPointCloudManager.cpp \
     src/SolARKeyframesManager.cpp \
     src/SolARCovisibilityGraphManager.cpp \
