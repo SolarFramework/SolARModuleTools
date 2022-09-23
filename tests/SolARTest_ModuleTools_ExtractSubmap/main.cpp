@@ -63,7 +63,14 @@ int main(int argc,char** argv)
     LOG_INFO("Number of keyframes {}, cloud points {}, and camera parameters {} of the global map", globalKeyframeCollection->getNbKeyframes(), globalPointCloud->getNbPoints(), globalCameraParametersCollection->getNbCameraParameters());
 
 	SRef<Map> submap;
-	mapManager->getSubmap(10, 200, submap);
+    mapManager->getSubmap(70, 50, submap);
+    SRef<Keyframe> keyframeRef;
+    if (globalKeyframeCollection->getKeyframe(70, keyframeRef) != FrameworkReturnCode::_SUCCESS)
+    {
+        LOG_WARNING("The requested keyframe ID is higher than the number of keyframe of the original map");
+        return -1;
+    }
+
 	SRef<KeyframeCollection> subKeyframeCollection = submap->getConstKeyframeCollection();
 	SRef<PointCloud> subPointCloud = submap->getConstPointCloud();
     SRef<CameraParametersCollection> subCameraParametersCollection = submap->getConstCameraParametersCollection();
@@ -84,7 +91,8 @@ int main(int argc,char** argv)
 	for (const auto& it : subKeyframes)
 		subKeyframesPoses.push_back(it->getPose());
 
-	while (viewer3DPoints->display(globalCloudPoints, Transform3Df::Identity(), subKeyframesPoses, {},
+
+    while (viewer3DPoints->display(globalCloudPoints, keyframeRef->getPose(), subKeyframesPoses, {},
 		subCloudPoints, globalKeyframesPoses) == FrameworkReturnCode::_SUCCESS);
     
 
