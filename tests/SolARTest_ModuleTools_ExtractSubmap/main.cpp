@@ -59,13 +59,15 @@ int main(int argc,char** argv)
 	mapManager->getMap(globalMap);
 	const SRef<KeyframeCollection>& globalKeyframeCollection = globalMap->getConstKeyframeCollection();
 	const SRef<PointCloud>& globalPointCloud = globalMap->getConstPointCloud();
-	LOG_INFO("Number of keyframes {} and cloud points {} of the global map", globalKeyframeCollection->getNbKeyframes(), globalPointCloud->getNbPoints());
+    const SRef<CameraParametersCollection>& globalCameraParametersCollection = globalMap->getConstCameraParametersCollection();
+    LOG_INFO("Number of keyframes {}, cloud points {}, and camera parameters {} of the global map", globalKeyframeCollection->getNbKeyframes(), globalPointCloud->getNbPoints(), globalCameraParametersCollection->getNbCameraParameters());
 
 	SRef<Map> submap;
 	mapManager->getSubmap(10, 200, submap);
 	SRef<KeyframeCollection> subKeyframeCollection = submap->getConstKeyframeCollection();
 	SRef<PointCloud> subPointCloud = submap->getConstPointCloud();
-	LOG_INFO("Number of keyframes {} and cloud points {} of the submap", subKeyframeCollection->getNbKeyframes(), subPointCloud->getNbPoints());
+    SRef<CameraParametersCollection> subCameraParametersCollection = submap->getConstCameraParametersCollection();
+    LOG_INFO("Number of keyframes {}, cloud points {}, and camera parameters {} of the submap", subKeyframeCollection->getNbKeyframes(), subPointCloud->getNbPoints(), subCameraParametersCollection->getNbCameraParameters());
 	
 
 	// get global point cloud and keyframes	
