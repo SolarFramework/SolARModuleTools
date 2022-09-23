@@ -69,7 +69,8 @@ void  SolARMapFilter::filter(const Transform3Df & pose1, const Transform3Df & po
 {
 	if (input.size() == 0)
 	{
-		LOG_INFO("mapFilter opencv has an empty vector as input");
+        LOG_DEBUG("mapFilter opencv has an empty vector as input");
+        return;
 	}
 
 	output.clear();
