@@ -37,12 +37,50 @@ SolARCameraParametersManager::SolARCameraParametersManager():ComponentBase(xpcf:
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef<CameraParameters> cameraParameters)
 {
     m_cameraParametersCollection->acquireLock();
+    const auto [lb, ub] = m_camParamsSet.equal_range(*cameraParameters);
+    if (lb != m_camParamsSet.end())
+    {
+        for (auto it = lb; it != ub; it++)
+        {
+            if (it->intrinsic == cameraParameters->intrinsic &&
+                it->distortion == cameraParameters->distortion &&
+                it->type == cameraParameters->type &&
+                it->resolution.width == cameraParameters->resolution.width &&
+                it->resolution.height == cameraParameters->resolution.height &&
+                it->name == cameraParameters->name)
+            {
+                // A Camera parameters with the same characteristics already exists.
+                cameraParameters->id = it->id;
+                return FrameworkReturnCode::_SUCCESS;
+            }
+        }
+    }
+    m_camParamsSet.insert(*cameraParameters);
     return m_cameraParametersCollection->addCameraParameters(cameraParameters);
 }
 
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(CameraParameters & cameraParameters)
 {
     m_cameraParametersCollection->acquireLock();
+    const auto [lb, ub] = m_camParamsSet.equal_range(cameraParameters);
+    if (lb != m_camParamsSet.end())
+    {
+        for (auto it = lb; it != ub; it++)
+        {
+            if (it->intrinsic == cameraParameters.intrinsic &&
+                it->distortion == cameraParameters.distortion &&
+                it->type == cameraParameters.type &&
+                it->resolution.width == cameraParameters.resolution.width &&
+                it->resolution.height == cameraParameters.resolution.height &&
+                it->name == cameraParameters.name)
+            {
+                // A Camera parameters with the same characteristics already exists.
+                cameraParameters.id = it->id;
+                return FrameworkReturnCode::_SUCCESS;
+            }
+        }
+    }
+    m_camParamsSet.insert(cameraParameters);
     return m_cameraParametersCollection->addCameraParameters(cameraParameters);
 }
 
@@ -73,6 +111,25 @@ FrameworkReturnCode SolARCameraParametersManager::getAllCameraParameters(std::ve
 FrameworkReturnCode SolARCameraParametersManager::suppressCameraParameters(const uint32_t id)
 {
     m_cameraParametersCollection->acquireLock();
+    CameraParameters cameraParameters;
+    m_cameraParametersCollection->getCameraParameters(id, cameraParameters);
+    const auto [lb, ub] = m_camParamsSet.equal_range(cameraParameters);
+    if (lb != m_camParamsSet.end())
+    {
+        for (auto it = lb; it != ub; it++)
+        {
+            if (it->intrinsic == cameraParameters.intrinsic &&
+                it->distortion == cameraParameters.distortion &&
+                it->type == cameraParameters.type &&
+                it->resolution.width == cameraParameters.resolution.width &&
+                it->resolution.height == cameraParameters.resolution.height &&
+                it->name == cameraParameters.name)
+            {
+               m_camParamsSet.erase(it);
+               break;
+            }
+        }
+    }
     return m_cameraParametersCollection->suppressCameraParameters(id);
 }
 
@@ -105,6 +162,13 @@ FrameworkReturnCode SolARCameraParametersManager::loadFromFile(const std::string
     InputArchive ia(ifs);
     ia >> m_cameraParametersCollection;
 	ifs.close();
+    m_camParamsSet.clear();
+    std::vector<SRef<CameraParameters>> cameraParameters;
+    getAllCameraParameters(cameraParameters);
+    for (auto camParams : cameraParameters)
+    {
+        m_camParamsSet.insert(*camParams);
+    }
 	return FrameworkReturnCode::_SUCCESS;
 }
 

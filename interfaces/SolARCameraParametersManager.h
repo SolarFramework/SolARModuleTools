@@ -114,7 +114,13 @@ public:
 
 
  private:
+    struct Compare
+    {
+        bool operator()(const SolAR::datastructure::CameraParameters lcam, const SolAR::datastructure::CameraParameters rcam) const /* noexcept */ { return lcam.intrinsic(0,0) > lcam.intrinsic(0,0); }
+    };
+
     SRef<SolAR::datastructure::CameraParametersCollection> m_cameraParametersCollection;
+    std::multiset<SolAR::datastructure::CameraParameters, Compare>  m_camParamsSet;
 };
 
 }
