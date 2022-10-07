@@ -185,7 +185,18 @@ std::unique_lock<std::mutex> SolARCameraParametersManager::getCameraParametersCo
 
 void SolARCameraParametersManager::setCameraParametersCollection(const SRef<datastructure::CameraParametersCollection> cameraParametersCollection)
 {
-    m_cameraParametersCollection = cameraParametersCollection;
+    std::vector<SRef<CameraParameters>> camParams;
+    if (cameraParametersCollection->getAllCameraParameters(camParams) != FrameworkReturnCode::_SUCCESS)
+    {
+        LOG_WARNING("cannot get all camera parameters from the camera parameters collection");
+        return;
+    }
+
+    // Add camera parameters to the collection
+    for (auto camParam : camParams)
+    {
+        addCameraParameters(camParam);
+    }
 }
 
 
