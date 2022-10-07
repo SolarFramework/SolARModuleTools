@@ -31,7 +31,8 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        auto cameraParametersManager = xpcfComponentManager->resolve<SolAR::api::storage::ICameraParametersManager>();
+        auto cameraParametersManager1 = xpcfComponentManager->resolve<SolAR::api::storage::ICameraParametersManager>();
+        auto cameraParametersManager2 = xpcfComponentManager->resolve<SolAR::api::storage::ICameraParametersManager>();
         auto ardevice = xpcfComponentManager->resolve<SolAR::api::input::devices::IARDevice>();
 
         // file name to save camera Parameters
@@ -40,33 +41,56 @@ int main(int argc, char* argv[])
         SolAR::datastructure::CameraRigParameters camRig = ardevice->getCameraParameters();
         for (auto camParams : camRig.cameraParams)
         {
-            cameraParametersManager->addCameraParameters(camParams.second);
+            cameraParametersManager1->addCameraParameters(camParams.second);
             std::cout << "-------------" << std::endl;
             std::cout << "Try to add cameraParameters: " << camParams.second.name << ", get id " << camParams.second.id << std::endl;
             ids.push_back(camParams.second.id);
-            std::cout << "All camera parameters in camera parameters manager:" << std::endl;
+            std::cout << "All camera parameters in camera parameters manager 1:" << std::endl;
             std::vector<SRef<CameraParameters>> allCamParams;
-            cameraParametersManager->getAllCameraParameters(allCamParams);
+            cameraParametersManager1->getAllCameraParameters(allCamParams);
+            for (auto cp : allCamParams)
+                std::cout << "   - camera parameters with id " << cp->id << ", named " << cp->name << std::endl;
+        }
+
+        std::cout << std::endl << std::endl;
+        std::cout << "Copy camera parameters from manager 1 to manager 2" << std::endl;
+        cameraParametersManager2->setCameraParametersCollection(cameraParametersManager1->getConstCameraParametersCollection());
+        std::vector<SRef<SolAR::datastructure::CameraParameters>> camParamsVector;
+        cameraParametersManager2->getAllCameraParameters(camParamsVector);
+        std::cout << "All camera parameters in Manager 2" << std::endl;
+        for (auto camParams : camParamsVector)
+        {
+            std::cout << "   - camera parameters with id " << camParams->id << ", named " << camParams->name << std::endl;
+        }
+
+        cameraParametersManager2->saveToFile(fileName);
+        std::cout << std::endl << std::endl;
+        std::cout << "All camera parameters from manager 2 saved" << std::endl;
+        cameraParametersManager2->loadFromFile(fileName);
+        std::cout << "All camera parameters from manager 2 reloaded" << std::endl;
+        std::cout << std::endl << std::endl;
+
+        for (auto camParams : camRig.cameraParams)
+        {
+            cameraParametersManager2->addCameraParameters(camParams.second);
+            std::cout << "-------------" << std::endl;
+            std::cout << "Try to add cameraParameters: " << camParams.second.name << ", get id " << camParams.second.id << std::endl;
+            std::cout << "All camera parameters in camera parameters manager 2:" << std::endl;
+            std::vector<SRef<CameraParameters>> allCamParams;
+            cameraParametersManager2->getAllCameraParameters(allCamParams);
             for (auto cp : allCamParams)
                 std::cout << "   - camera parameters with id " << cp->id << ", named " << cp->name << std::endl;
         }
 
 
-        cameraParametersManager->saveToFile(fileName);
-        std::cout << std::endl << std::endl;
-        std::cout << "All camera parameters saved" << std::endl;
-        cameraParametersManager->loadFromFile(fileName);
-        std::cout << "All camera parameters reloaded" << std::endl;
-        std::cout << std::endl << std::endl;
-
         for (auto id : ids)
         {
-            cameraParametersManager->suppressCameraParameters(id);
+            cameraParametersManager2->suppressCameraParameters(id);
             std::cout << "-------------" << std::endl;
-            std::cout << "Try to remove cameraParameters with id: " << id << std::endl;
-            std::cout << "All camera parameters in camera parameters manager:" << std::endl;
+            std::cout << "Try to remove cameraParameters from camera parameters manager 2 with id: " << id << std::endl;
+            std::cout << "All camera parameters in camera parameters manager 2:" << std::endl;
             std::vector<SRef<CameraParameters>> allCamParams;
-            cameraParametersManager->getAllCameraParameters(allCamParams);
+            cameraParametersManager2->getAllCameraParameters(allCamParams);
             for (auto cp : allCamParams)
                 std::cout << "   - camera parameters with id " << cp->id << ", named " << cp->name << std::endl;
         }
