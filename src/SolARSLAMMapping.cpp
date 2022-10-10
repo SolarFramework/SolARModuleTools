@@ -17,7 +17,7 @@
 #include "SolARSLAMMapping.h"
 #include "core/Log.h"
 
-
+#define OPTIM_ON
 namespace xpcf = org::bcom::xpcf;
 
 XPCF_DEFINE_FACTORY_CREATE_INSTANCE(SolAR::MODULES::TOOLS::SolARSLAMMapping);
@@ -181,8 +181,15 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 
 		// Feature matching based on epipolar constraint
 		std::vector < DescriptorMatch> tmpMatches, goodMatches;
+#ifdef OPTIM_ON
+		std::vector<uint32_t> tmpKf_indexKeypoints;
+		for (uint32_t j = 0; j < static_cast<uint32_t>(tmpKf->getUndistortedKeypoints().size()); j++) {
+			if (tmpMapVisibility.find(j) == tmpMapVisibility.end())
+				tmpKf_indexKeypoints.push_back(j);
+		}
+		m_matcher->match(keyframe, tmpKf, goodMatches, newKf_indexKeypoints, tmpKf_indexKeypoints);
+#else
 		m_matcher->match(keyframe, tmpKf, tmpMatches, newKf_indexKeypoints);
-
 		// find info to triangulate						
 		for (int j = 0; j < tmpMatches.size(); ++j) {
 			unsigned int idx_newKf = tmpMatches[j].getIndexInDescriptorA();
@@ -191,6 +198,7 @@ void SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Keyframe>& keyfram
 				goodMatches.push_back(tmpMatches[j]);
 			}
 		}
+#endif
 		if (goodMatches.size() == 0)
 			continue;
 		
