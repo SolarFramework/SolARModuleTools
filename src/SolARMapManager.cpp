@@ -77,6 +77,7 @@ FrameworkReturnCode SolARMapManager::setMap(const SRef<Map> map)
 FrameworkReturnCode SolARMapManager::getMap(SRef<Map>& map)
 {
 	map = m_map;
+
 	return FrameworkReturnCode::_SUCCESS;
 }
 
@@ -129,7 +130,11 @@ FrameworkReturnCode SolARMapManager::getSubmap(uint32_t idCenteredKeyframe, uint
 		subKeyframeCollection->addKeyframe(*kf);
 	
     // add camera Parameters to submap
-    // To do
+    std::vector<SRef<CameraParameters>> allCamParams;
+    if (m_cameraParametersManager->getAllCameraParameters(allCamParams) == FrameworkReturnCode::_SUCCESS) {
+        for (const auto &it : allCamParams)
+            subcameraParametersCollection->addCameraParameters(*it);
+    }
 
 	// find corresponding id of cloud point and keyframe from map to submap
 	std::vector<SRef<CloudPoint>> subCloudPoints;
@@ -254,6 +259,11 @@ FrameworkReturnCode SolARMapManager::addCloudPoint(const SRef<CloudPoint> cloudP
 	for (int i = 0; i < keyframeIds.size() - 1; i++)
 		for (int j = i + 1; j < keyframeIds.size(); j++)
 			m_covisibilityGraphManager->increaseEdge(keyframeIds[i], keyframeIds[j], 1);
+
+    // update internal map
+    m_map->setPointCloud(m_pointCloudManager->getConstPointCloud());
+    m_map->setCovisibilityGraph(m_covisibilityGraphManager->getConstCovisibilityGraph());
+
 	return FrameworkReturnCode::_SUCCESS;
 }
 
@@ -278,7 +288,12 @@ FrameworkReturnCode SolARMapManager::removeCloudPoint(const SRef<CloudPoint> clo
 
 	// remove cloud point
 	m_pointCloudManager->suppressPoint(cloudPoint->getId());
-	return FrameworkReturnCode::_SUCCESS;
+
+    // update internal map
+    m_map->setPointCloud(m_pointCloudManager->getConstPointCloud());
+    m_map->setCovisibilityGraph(m_covisibilityGraphManager->getConstCovisibilityGraph());
+
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 FrameworkReturnCode SolARMapManager::addKeyframe(const SRef<datastructure::Keyframe> keyframe)
@@ -287,7 +302,12 @@ FrameworkReturnCode SolARMapManager::addKeyframe(const SRef<datastructure::Keyfr
 	m_keyframesManager->addKeyframe(keyframe);
 	// add to keyframe retriever
 	m_keyframeRetriever->addKeyframe(keyframe);
-	return FrameworkReturnCode();
+
+    // update internal map
+    m_map->setKeyframeCollection(m_keyframesManager->getConstKeyframeCollection());
+    m_map->setKeyframeRetrieval(m_keyframeRetriever->getConstKeyframeRetrieval());
+
+    return FrameworkReturnCode();
 }
 
 FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyframe)
@@ -310,19 +330,34 @@ FrameworkReturnCode SolARMapManager::removeKeyframe(const SRef<Keyframe> keyfram
 	m_keyframeRetriever->suppressKeyframe(keyframe->getId());
 	// remove keyframe
 	m_keyframesManager->suppressKeyframe(keyframe->getId());
-	return FrameworkReturnCode::_SUCCESS;
+
+    // update internal map
+    m_map->setKeyframeCollection(m_keyframesManager->getConstKeyframeCollection());
+    m_map->setCovisibilityGraph(m_covisibilityGraphManager->getConstCovisibilityGraph());
+    m_map->setKeyframeRetrieval(m_keyframeRetriever->getConstKeyframeRetrieval());
+
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 FrameworkReturnCode SolARMapManager::addCameraParameters(const SRef<datastructure::CameraParameters> cameraParameters)
 {
     // add to camera parameters manager
     m_cameraParametersManager->addCameraParameters(cameraParameters);
+
+    // update internal map
+    m_map->setCameraParametersCollection(m_cameraParametersManager->getConstCameraParametersCollection());
+
     return FrameworkReturnCode();
 }
 
 FrameworkReturnCode SolARMapManager::removeCameraParameters(const SRef<datastructure::CameraParameters> cameraParameters)
 {
-    return m_cameraParametersManager->suppressCameraParameters(cameraParameters->id);
+    FrameworkReturnCode result = m_cameraParametersManager->suppressCameraParameters(cameraParameters->id);
+
+    // update internal map
+    m_map->setCameraParametersCollection(m_cameraParametersManager->getConstCameraParametersCollection());
+
+    return result;
 }
 
 FrameworkReturnCode SolARMapManager::getCameraParameters(const uint32_t id, SRef<SolAR::datastructure::CameraParameters>& cameraParameters)
@@ -390,6 +425,7 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 			nbRemovedKfs++;
 		}
 	}
+
 	return nbRemovedKfs;
 }
 
@@ -564,7 +600,6 @@ FrameworkReturnCode SolARMapManager::deleteFile()
 
     return FrameworkReturnCode::_SUCCESS;
 }
-
 
 }
 }
