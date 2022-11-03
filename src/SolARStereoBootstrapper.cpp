@@ -31,6 +31,7 @@ SolARStereoBootstrapper::SolARStereoBootstrapper() :ConfigurableBase(xpcf::toUUI
 {
     addInterface<api::slam::IBootstrapper>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
+    declareInjectable<api::storage::ICameraParametersManager>(m_cameraParametersManager);
     declareInjectable<api::geom::IReprojectionStereo>(m_stereoReprojector);
 	declareInjectable<api::display::I2DOverlay>(m_overlay2DGreen, "Green");
 	declareInjectable<api::display::I2DOverlay>(m_overlay2DRed, "Red");
@@ -45,9 +46,15 @@ SolARStereoBootstrapper::~SolARStereoBootstrapper()
 
 FrameworkReturnCode SolARStereoBootstrapper::process(const SRef<SolAR::datastructure::Frame>& frame, SRef<SolAR::datastructure::Image>& view)
 {
+    SRef<CameraParameters> camParams;
+    if (m_cameraParametersManager->getCameraParameters(frame->getCameraID(), camParams) != FrameworkReturnCode :: _SUCCESS)
+    {
+        LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", frame->getCameraID());
+        return FrameworkReturnCode::_ERROR_;
+    }
 	view = frame->getView()->copy();
 	std::vector<SRef<CloudPoint>> cloudPoints;
-    m_stereoReprojector->reprojectToCloudPoints(frame, frame->getCameraParameters().intrinsic, cloudPoints);
+    m_stereoReprojector->reprojectToCloudPoints(frame, camParams->intrinsic, cloudPoints);
 	LOG_DEBUG("Number of estimated cloud points: {}", cloudPoints.size());
 	// draw to display
 	const std::vector<Keypoint>& undistortedKeypoints = frame->getUndistortedKeypoints();

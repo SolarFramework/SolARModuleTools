@@ -75,7 +75,8 @@ private:
 
 private:
 	SRef<api::storage::IMapManager>					m_mapManager;
-	SRef<api::geom::IProject>						m_projector;
+    SRef<api::storage::ICameraParametersManager>	m_cameraParametersManager;
+    SRef<api::geom::IProject>						m_projector;
 	SRef<api::features::IDescriptorMatcherRegion>	m_matcher;
 	SRef<datastructure::CovisibilityGraph>          m_covisibilityGraph;
 	SRef<datastructure::PointCloud>                 m_pointCloud;

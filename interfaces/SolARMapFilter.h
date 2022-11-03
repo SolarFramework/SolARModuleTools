@@ -13,7 +13,7 @@ namespace TOOLS {
 
 /**
  * @class SolARMapFilter
- * @brief <B>Filters a cloud of 3D points by removing points with a too important reporjection error or those which are behind the camera.</B>
+ * @brief <B>Filters a cloud of 3D points by removing points with a too important reprojection error or those which are behind the camera.</B>
  * <TT>UUID: 09205b96-7cba-4415-bc61-64744bc26222</TT>
  *
  * The projection error threshold as well as the test of cheirality (removing points behind the camera) can be configured.

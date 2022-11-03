@@ -40,6 +40,7 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{ SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{ SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
@@ -91,6 +92,7 @@ private:
     bool                                                        m_initKeyframe1 = false;
     SRef<SolAR::datastructure::Keyframe>                        m_keyframe1, m_keyframe2;
     SRef<SolAR::api::storage::IMapManager>						m_mapManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>			m_cameraParametersManager;
     SRef<SolAR::api::features::IDescriptorMatcher>				m_matcher;
     SRef<SolAR::api::features::IMatchesFilter>					m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>				m_triangulator;

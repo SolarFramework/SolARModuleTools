@@ -19,6 +19,7 @@
 
 #include "api/loop/ILoopClosureDetector.h"
 #include "api/reloc/IKeyframeRetriever.h"
+#include "api/storage/IMapManager.h"
 #include "api/storage/ICovisibilityGraphManager.h"
 #include "api/storage/IKeyframesManager.h"
 #include "api/solver/pose/I3DTransformSACFinderFrom3D3D.h"
@@ -40,6 +41,8 @@ namespace TOOLS {
 * <TT>UUID: e3d5946c-c1f1-11ea-b3de-0242ac130004</TT>
 *
 * @SolARComponentInjectablesBegin
+* @SolARComponentInjectable{SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraph}
 * @SolARComponentInjectable{SolAR::api::reloc::IKeyframeRetriever}
@@ -78,6 +81,8 @@ public:
 	void unloadComponent () override final;
 
  private:
+    SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>					m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>					m_keyframesManager;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>            m_covisibilityGraphManager;
     SRef<SolAR::api::reloc::IKeyframeRetriever>                     m_keyframeRetriever;

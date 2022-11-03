@@ -25,6 +25,7 @@
 #include "SolARMapManager.h"
 #include "SolARBasicSink.h"
 #include "SolARBasicSource.h"
+#include "SolARCameraParametersManager.h"
 #include "SolARKeyframesManager.h"
 #include "SolARPointCloudManager.h"
 #include "SolARCovisibilityGraphManager.h"
@@ -99,6 +100,10 @@ extern "C" XPCF_MODULEHOOKS_API xpcf::XPCFErrorCode XPCF_getComponent(const boos
     if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
     {
         errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARBasicSource>(componentUUID,interfaceRef);
+    }
+    if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
+    {
+        errCode = xpcf::tryCreateComponent<SolAR::MODULES::TOOLS::SolARCameraParametersManager>(componentUUID,interfaceRef);
     }
     if (errCode != xpcf::XPCFErrorCode::_SUCCESS)
     {
@@ -201,6 +206,7 @@ XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARMapManager)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARMapFilter)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARBasicSink)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARBasicSource)
+XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARCameraParametersManager)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARKeyframesManager)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARPointCloudManager)
 XPCF_ADD_COMPONENT(SolAR::MODULES::TOOLS::SolARCovisibilityGraphManager)
