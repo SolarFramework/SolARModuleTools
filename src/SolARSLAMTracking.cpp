@@ -125,8 +125,14 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 		return FrameworkReturnCode::_ERROR_;
 	if (framePose.isApprox(Transform3Df::Identity()))
 		m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
-	else 
-		m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_referenceKeyframe->getPose(), framePose, m_referenceKeyframe->getCameraParameters().intrinsic);
+    else {
+        SRef<CameraParameters> camParamsTmp;
+        if (m_cameraParametersManager->getCameraParameters(m_referenceKeyframe->getCameraID(), camParamsTmp) != FrameworkReturnCode :: _SUCCESS)    {
+            LOG_ERROR("Camera parameters with id {} does not exists in the camera parameters manager", m_referenceKeyframe->getCameraID());
+            return FrameworkReturnCode::_ERROR_;
+        }
+        m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_referenceKeyframe->getPose(), framePose, camParamsTmp->intrinsic);
+    }
 	float maxMatchDistance = -FLT_MAX;
 	for (const auto &it : matches)
 		maxMatchDistance = std::max(maxMatchDistance, it.getMatchingScore());
