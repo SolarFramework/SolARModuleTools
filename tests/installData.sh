@@ -4,7 +4,7 @@ unzip -o fbow_voc.zip -d ./data
 rm fbow_voc.zip
 
 # Download AR device capture
-curl https://artifact.b-com.com/solar-generic-local/captures/singleRGB/TUM/freiburg3_long_office_household.zip -L -o map.zip
+curl https://repository.solarframework.org/generic/captures/singleRGB/TUM/freiburg3_long_office_household.zip -L -o map.zip
 unzip -o map.zip -d ./data
 rm map.zip
 
