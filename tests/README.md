@@ -18,7 +18,7 @@ This vocabulary is required for keyframe retrieval. Download the vocabularies re
 
 The loop closure tests will use a pre-built map which need to be download in your `./data` folder. You can use the map available on the SolAR artifactory.
 
-Download the map [freiburg3_long_office_household.zip](https://artifact.b-com.com/solar-generic-local/captures/singleRGB/TUM/freiburg3_long_office_household.zip), and extract the `./map` folder into the `./data` folder.
+Download the map [freiburg3_long_office_household.zip](https://repository.solarframework.org/generic/captures/singleRGB/TUM/freiburg3_long_office_household.zip), and extract the `./map` folder into the `./data` folder.
 
 ### Required modules
 
