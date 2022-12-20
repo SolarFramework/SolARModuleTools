@@ -28,6 +28,7 @@ namespace TOOLS {
 /**
  * @class SolARKeyframesManager
  * @brief A storage component to store a persistent set of keyframes, based on a std::set.
+ * <TT>UUID: e046cf87-d0a4-4c6f-af3d-18dc70881a34</TT>
  */
 class SOLAR_TOOLS_EXPORT_API SolARKeyframesManager : public org::bcom::xpcf::ComponentBase,
         public SolAR::api::storage::IKeyframesManager {

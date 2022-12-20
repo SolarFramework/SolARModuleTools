@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<xpcf-registry autoAlias="true">
+    <module uuid="15e1990b-86b2-445c-8194-0cbe80ede970" name="SolARModuleOpenCV" description="SolARModuleOpenCV" path="$XPCF_MODULE_ROOT/SolARBuild/SolARModuleOpenCV/1.0.0/lib/x86_64/shared">
+        <component uuid="4b5576c1-4c44-4835-a405-c8de2d4f85b0" name="SolARDeviceDataLoader" description="SolARDeviceDataLoader">
+            <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
+            <interface uuid="999085e6-1d11-41a5-8cca-3daf4e02e941" name="IARDevice" description="IARDevice"/>
+        </component>
+    </module>
+    <module uuid="28b89d39-41bd-451d-b19e-d25a3d7c5797" name="SolARModuleTools"  description="SolARModuleTools"  path="$XPCF_MODULE_ROOT/SolARBuild/SolARModuleTools/1.0.0/lib/x86_64/shared">
+        <component uuid="e046cf87-d0a4-4c6f-af3d-18dc70881a34" name="SolARCameraParametersManager" description="SolARCameraParametersManager">
+            <interface uuid="125f2007-1bf9-421d-9367-fbdc1210d006" name="IComponentIntrospect" description="IComponentIntrospect"/>
+            <interface uuid="31f151fc-326d-11ed-a261-0242ac120002" name="ICameraParametersManager" description="ICameraParametersManager"/>
+        </component>
+    </module>
+    <factory>
+    </factory>
+    <properties>
+        <configure component="SolARDeviceDataLoader">
+            <property name="calibrationFile" type="string" value="cameraParameters.json"/>
+        </configure>
+    </properties>
+</xpcf-registry>

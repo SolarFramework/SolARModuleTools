@@ -43,6 +43,7 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherRegion}
@@ -131,6 +132,7 @@ private:
     SRef<SolAR::api::solver::pose::I3DTransformFinderFrom2D3D>      m_pnp;
     SRef<SolAR::api::geom::IProject>                                m_projector;
     SRef<SolAR::api::reloc::IKeyframeRetriever>                     m_keyframeRetriever;
+    SRef<SolAR::api::storage::ICameraParametersManager>             m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>                    m_keyframesManager;
     SRef<SolAR::api::storage::IPointCloudManager>                   m_pointCloudManager;
 };

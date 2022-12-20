@@ -18,6 +18,7 @@
 #define SOLARLOOPCORRECTOR_H
 
 #include "api/loop/ILoopCorrector.h"
+#include "api/storage/IMapManager.h"
 #include "api/storage/IPointCloudManager.h"
 #include "api/storage/ICovisibilityGraphManager.h"
 #include "api/storage/IKeyframesManager.h"
@@ -40,6 +41,8 @@ namespace TOOLS {
  * <TT>UUID: 1007b588-c1f2-11ea-b3de-0242ac130004</TT>
  *
  *@SolARComponentInjectablesBegin
+ * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
+ * @SolARComponentInjectable{SolAR::api::storage::ICameraParametersManager}
  * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
  * @SolARComponentInjectable{SolAR::api::storage::IPointCloudManager}
  * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraph}
@@ -75,6 +78,8 @@ private:
 	void getLocalMapPoints(const std::map<uint32_t, SRef<SolAR::datastructure::Keyframe> > &connectedKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>>& localMapPoints);
 
  private:
+    SRef<SolAR::api::storage::IMapManager>                  m_mapManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>		m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>			m_keyframesManager;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>    m_covisibilityGraphManager;
     SRef<SolAR::api::storage::IPointCloudManager>			m_pointCloudManager;

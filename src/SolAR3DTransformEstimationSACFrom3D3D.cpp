@@ -194,7 +194,9 @@ FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const std::v
 
 FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const SRef<Keyframe> firstKeyframe,
                                                                     const SRef<Keyframe> secondKeyframe,
-																	const std::vector<DescriptorMatch>& matches, 
+                                                                    const SolAR::datastructure::CameraParameters & firstCameraParameters,
+                                                                    const SolAR::datastructure::CameraParameters & secondCameraParameters,
+                                                                    const std::vector<DescriptorMatch>& matches,
 																	const std::vector<Point3Df>& firstPoints3D, 
 																	const std::vector<Point3Df>& secondPoints3D, 
 																	Transform3Df & pose, 
@@ -241,8 +243,8 @@ FrameworkReturnCode SolAR3DTransformEstimationSACFrom3D3D::estimate(const SRef<K
 		m_transform3D->transform(secondPoints3D, tmpPose.inverse(), secondPoints3DTrans);
 		// project the 3D tranformed points on the image
 		std::vector< Point2Df > firstProjected2DPts, secondProjected2DPts;
-		m_projector->project(firstPoints3DTrans, pose2, secondKeyframe->getCameraParameters(), firstProjected2DPts);
-		m_projector->project(secondPoints3DTrans, pose1, firstKeyframe->getCameraParameters(), secondProjected2DPts);
+        m_projector->project(firstPoints3DTrans, pose2, secondCameraParameters, firstProjected2DPts);
+        m_projector->project(secondPoints3DTrans, pose1, firstCameraParameters, secondProjected2DPts);
 		// get inliers
 		std::vector<int> tmpInliers;
 		getInliersByProject(firstProjected2DPts, keypoints2, secondProjected2DPts, keypoints1, m_reprojError, tmpInliers);

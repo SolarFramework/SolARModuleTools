@@ -89,7 +89,7 @@ public:
 
 private:
 	void updateAssociateCloudPoint(const SRef<SolAR::datastructure::Keyframe> &keyframe);
-	void findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
+    FrameworkReturnCode findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
 	void cloudPointsCulling(const SRef<SolAR::datastructure::Keyframe> &keyframe);
     void setIdle(bool flag);
 
@@ -100,6 +100,7 @@ private:
     bool                                                                        m_idle = true;
     std::mutex                                                                  m_mutexIdle;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>							m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;
     SRef<SolAR::api::reloc::IKeyframeRetriever>									m_keyframeRetriever;
     SRef<SolAR::api::storage::IMapManager>                                      m_mapManager;

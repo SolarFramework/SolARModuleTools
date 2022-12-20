@@ -5,7 +5,7 @@ CONFIG -= qt
 QMAKE_PROJECT_DEPTH = 0
 
 ## global defintions : target lib name, version
-TARGET = SolARTest_ModuleTools_DualMapperSingleton
+TARGET = SolARTest_ModuleTools_CameraParametersManager
 VERSION=1.0.0
 PROJECTDEPLOYDIR = $${PWD}/../deploy
 
@@ -25,22 +25,21 @@ CONFIG(release,debug|release) {
     DEFINES += NDEBUG=1
 }
 
+DEPENDENCIESCONFIG = shared install_recurse
+
 win32:CONFIG -= static
 win32:CONFIG += shared
-
-QMAKE_TARGET.arch = x86_64 #must be defined prior to include
-DEPENDENCIESCONFIG = shared install_recurse
 
 ## Configuration for Visual Studio to install binaries and dependencies. Work also for QT Creator by replacing QMAKE_INSTALL
 PROJECTCONFIG = QTVS
 
-#NOTE : CONFIG as staticlib or sharedlib,  DEPENDENCIESCONFIG as staticlib or sharedlib, QMAKE_TARGET.arch and PROJECTDEPLOYDIR MUST BE DEFINED BEFORE templatelibconfig.pri inclusion
-include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/templateappconfig.pri)))
+#NOTE : CONFIG as staticlib or sharedlib, DEPENDENCIESCONFIG as staticlib or sharedlib, QMAKE_TARGET.arch and PROJECTDEPLOYDIR MUST BE DEFINED BEFORE templatelibconfig.pri inclusion
+include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/templateappconfig.pri)))  # Shell_quote & shell_path required for visual on windows
 
 HEADERS += \
 
 SOURCES += \
-    testMain.cpp
+    main.cpp
 
 
 unix {
@@ -89,12 +88,16 @@ linux {
 }
 
 configfile.path = $${TARGETDEPLOYDIR}/
-configfile.files = $${PWD}/SolARTest_ModuleTools_DualMapperSingleton_conf.xml
+configfile.files = $${PWD}/SolARTest_ModuleTools_CameraParametersManager_conf.xml \
+                   $${PWD}/cameraParameters.json
 INSTALLS += configfile
 
 DISTFILES += \
-    SolARTest_ModuleTools_DualMapperSingleton_conf.xml \
+    SolARTest_ModuleTools_CameraParametersManager_conf.xml \
+    cameraParameters.json \
     packagedependencies.txt
 
 #NOTE : Must be placed at the end of the .pro
 include ($$shell_quote($$shell_path($${QMAKE_REMAKEN_RULES_ROOT}/remaken_install_target.pri)))) # Shell_quote & shell_path required for visual on windows
+
+
