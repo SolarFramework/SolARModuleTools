@@ -5,7 +5,7 @@ powershell Expand-Archive fbow_voc.zip -DestinationPath .\data -F
 del fbow_voc.zip
 
 :: Download maps
-curl https://artifact.b-com.com/solar-generic-local/captures/singleRGB/TUM/freiburg3_long_office_household.zip -L -o map.zip
+curl https://repository.solarframework.org/generic/captures/singleRGB/TUM/freiburg3_long_office_household.zip -L -o map.zip
 powershell Expand-Archive map.zip -DestinationPath .\data -F
 del map.zip
 
