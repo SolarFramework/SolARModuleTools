@@ -55,8 +55,14 @@ FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef
             }
         }
     }
-    m_camParamsSet.insert(*cameraParameters);
-    return m_cameraParametersCollection->addCameraParameters(cameraParameters);
+
+    if (m_cameraParametersCollection->addCameraParameters(cameraParameters) == FrameworkReturnCode::_SUCCESS){
+        m_camParamsSet.insert(*cameraParameters);
+        return FrameworkReturnCode::_SUCCESS;
+    }
+
+    return FrameworkReturnCode::_ERROR_;
+
 }
 
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(CameraParameters & cameraParameters)
@@ -80,8 +86,13 @@ FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(CameraPara
             }
         }
     }
-    m_camParamsSet.insert(cameraParameters);
-    return m_cameraParametersCollection->addCameraParameters(cameraParameters);
+
+    if (m_cameraParametersCollection->addCameraParameters(cameraParameters) == FrameworkReturnCode::_SUCCESS){
+        m_camParamsSet.insert(cameraParameters);
+        return FrameworkReturnCode::_SUCCESS;
+    }
+
+    return FrameworkReturnCode::_ERROR_;
 }
 
 FrameworkReturnCode SolARCameraParametersManager::getCameraParameters(const uint32_t id, SRef<CameraParameters> & cameraParameters) const
