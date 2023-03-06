@@ -120,7 +120,6 @@ public:
     };
 
     SRef<SolAR::datastructure::CameraParametersCollection> m_cameraParametersCollection;
-    std::multiset<SolAR::datastructure::CameraParameters, Compare>  m_camParamsSet;
 };
 
 }
