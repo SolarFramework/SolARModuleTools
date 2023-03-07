@@ -40,9 +40,9 @@ FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef
 
     std::vector<SRef<CameraParameters>> cameraParametersVector;
 
-    if (getAllCameraParameters(cameraParametersVector) == FrameworkReturnCode::_SUCCESS)
+    if (m_cameraParametersCollection->getAllCameraParameters(cameraParametersVector) == FrameworkReturnCode::_SUCCESS)
     {
-        for (auto & it : cameraParametersVector)
+        for (const auto & it : cameraParametersVector)
         {
             if (it->intrinsic == cameraParameters->intrinsic &&
                 it->distortion == cameraParameters->distortion &&
@@ -57,14 +57,19 @@ FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef
             }
         }
     }
+    else
+    {
+        LOG_ERROR("Error getting camera parameters collection");
+        return FrameworkReturnCode::_ERROR_;
+    }
 
-    return (m_cameraParametersCollection->addCameraParameters(cameraParameters));
+    return m_cameraParametersCollection->addCameraParameters(cameraParameters);
 }
 
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(CameraParameters & cameraParameters)
 {
     SRef<CameraParameters> camParamsSref = xpcf::utils::make_shared<CameraParameters>(cameraParameters);
-    return addCameraParameters(camParamsSref ); // calls addCameraParameters(const SRef<CameraParameters> cameraParameters)
+    return addCameraParameters(camParamsSref );
 }
 
 FrameworkReturnCode SolARCameraParametersManager::getCameraParameters(const uint32_t id, SRef<CameraParameters> & cameraParameters) const
@@ -112,21 +117,21 @@ int SolARCameraParametersManager::getNbCameraParameters() const
 
 FrameworkReturnCode SolARCameraParametersManager::saveToFile(const std::string& file) const
 {
-	std::ofstream ofs(file, std::ios::binary);
-	OutputArchive oa(ofs);
+    std::ofstream ofs(file, std::ios::binary);
+    OutputArchive oa(ofs);
     oa << m_cameraParametersCollection;
-	ofs.close();
-	return FrameworkReturnCode::_SUCCESS;
+    ofs.close();
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 FrameworkReturnCode SolARCameraParametersManager::loadFromFile(const std::string& file)
 {
     std::ifstream ifs(file, std::ios::binary);
-	if (!ifs.is_open())
-		return FrameworkReturnCode::_ERROR_;
+    if (!ifs.is_open())
+        return FrameworkReturnCode::_ERROR_;
     InputArchive ia(ifs);
     ia >> m_cameraParametersCollection;
-	ifs.close();
+    ifs.close();
     return FrameworkReturnCode::_SUCCESS;
 }
 
