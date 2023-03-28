@@ -194,6 +194,7 @@ private:
     float						m_reprojErrorThres = 3.0f;
     float						m_thresConfidence = 0.3f;
     float						m_ratioRedundantObs = 0.9f;
+	int   						m_boWFeatureFromMatchedDescriptors = 0;
 };
 }
 }

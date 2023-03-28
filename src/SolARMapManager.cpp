@@ -48,6 +48,7 @@ SolARMapManager::SolARMapManager():ConfigurableBase(xpcf::toUUID<SolARMapManager
 	declareProperty("reprojErrorThreshold", m_reprojErrorThres);
 	declareProperty("thresConfidence", m_thresConfidence);
 	declareProperty("ratioRedundantObs", m_ratioRedundantObs);
+	declareProperty("boWFeatureFromMatchedDescriptors", m_boWFeatureFromMatchedDescriptors);
 	LOG_DEBUG("SolARMapManager constructor");
 }
 
