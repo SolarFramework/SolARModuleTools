@@ -54,6 +54,7 @@ void SolARSLAMMapping::onInjected()
     LOG_DEBUG("SolARSLAMMapping::onInjected");
     // set min triangulation angle parameter of stereo filter to 0
     m_mapFilterStereo->bindTo<xpcf::IConfigurable>()->getProperty("minTriangulationAngle")->setFloatingValue(0);
+    m_boWFeatureFromMatchedDescriptors = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("boWFeatureFromMatchedDescriptors")->getIntegerValue();
 }
 
 bool SolARSLAMMapping::idle()
@@ -76,10 +77,10 @@ FrameworkReturnCode SolARSLAMMapping::process(const SRef<Frame> frame, SRef<Keyf
 	if (!m_isSaveImage)
 		frame->setView(nullptr);
     keyframe = xpcf::utils::make_shared<Keyframe>(frame);
-	// Add to keyframe manager
+    // Add to keyframe manager
     m_keyframesManager->addKeyframe(keyframe);
-	// Add to BOW retrieval
-    m_keyframeRetriever->addKeyframe(keyframe);
+    // Add to BOW retrieval
+    m_keyframeRetriever->addKeyframe(keyframe, false);
 	// Update keypoint visibility, descriptor in cloud point and connections between new keyframe with other keyframes
     updateAssociateCloudPoint(keyframe);
 	// Map point culling
@@ -237,8 +238,13 @@ FrameworkReturnCode SolARSLAMMapping::findMatchesAndTriangulation(const SRef<Key
         LOG_DEBUG("Filtered points / triangulated points: {} / {}", tmpFilteredCloudPoint.size(), tmpCloudPoint.size());
 
 		for (int i = 0; i < indexFiltered.size(); ++i) {
-			checkMatches[goodMatches[indexFiltered[i]].getIndexInDescriptorA()] = true;
+			DescriptorMatch curMatch = goodMatches[indexFiltered[i]];
+			checkMatches[curMatch.getIndexInDescriptorA()] = true;
 			cloudPoint.push_back(tmpFilteredCloudPoint[i]);
+            if (m_boWFeatureFromMatchedDescriptors > 0) {
+                keyframe->setKeypointStatusToMatched(curMatch.getIndexInDescriptorA());
+                tmpKf->setKeypointStatusToMatched(curMatch.getIndexInDescriptorB());
+            }
 		}
 	}
     return FrameworkReturnCode::_SUCCESS;

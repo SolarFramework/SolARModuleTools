@@ -64,6 +64,7 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	m_reprojErrorThreshold = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("reprojErrorThreshold")->getFloatingValue();
 	m_thresConfidence = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("thresConfidence")->getFloatingValue();
 	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getIntegerValue();
+	m_boWFeatureFromMatchedDescriptors = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("boWFeatureFromMatchedDescriptors")->getIntegerValue();
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
@@ -139,6 +140,12 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
         }
         m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_referenceKeyframe->getPose(), framePose, camParamsTmp->intrinsic, camParamsTmp2->intrinsic);
     }
+
+	// set matched map at keypoint to true in keyframe 
+	if (m_boWFeatureFromMatchedDescriptors > 0) {
+		for (const auto& match : matches)
+			m_referenceKeyframe->setKeypointStatusToMatched(match.getIndexInDescriptorA());
+	}
 
 	float maxMatchDistance = -FLT_MAX;
 	for (const auto &it : matches)
