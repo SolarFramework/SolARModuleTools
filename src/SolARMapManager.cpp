@@ -405,10 +405,13 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 		keyframesPruning = keyframes;
 	}
 
+    std::vector<uint32_t> keyframeIds;
 	int nbRemovedKfs(0);
 	for (const auto &itKf : keyframesPruning) {
-		if (itKf->getId() == 0 || itKf->isFixedPose())
-			continue;
+        if (itKf->getId() == 0 || itKf->isFixedPose()) {
+            keyframeIds.push_back(itKf->getId());
+            continue;
+        }
 		const std::map<uint32_t, uint32_t>& pcVisibility = itKf->getVisibility();
 		int nbRedundantObs(0);
 		for (const auto &itPC : pcVisibility) {
@@ -425,7 +428,37 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 			this->removeKeyframe(itKf);
 			nbRemovedKfs++;
 		}
+        else 
+            keyframeIds.push_back(itKf->getId());
 	}
+
+    // for each remaining keyframe, remove bad visibilities 
+    for (const auto& id : keyframeIds) {
+        SRef<Keyframe> kf;
+        m_keyframesManager->getKeyframe(id, kf);
+        // get camera intrinsics 
+        SRef<CameraParameters> camParams;
+        m_cameraParametersManager->getCameraParameters(kf->getCameraID(), camParams);
+        // get visibilities
+        std::map<uint32_t, uint32_t> curVis = kf->getVisibility();
+        auto pose = kf->getPose().inverse();
+        for (const auto& visi : curVis) {
+            Keypoint kpt = kf->getUndistortedKeypoint(visi.first);
+            SRef<CloudPoint> cloudPoint;
+            m_pointCloudManager->getPoint(visi.second, cloudPoint);
+            Vector3f ptSolar(cloudPoint->getX(), cloudPoint->getY(), cloudPoint->getZ());
+            auto ptCamera = pose*ptSolar;
+            if (ptCamera(2) == 0.f) {
+                kf->removeVisibility(visi.first, visi.second);
+                continue;
+            }
+            float projX = ptCamera(0) / ptCamera(2) * camParams->intrinsic(0, 0) + camParams->intrinsic(0, 2);
+            float projY = ptCamera(1) / ptCamera(2) * camParams->intrinsic(1, 1) + camParams->intrinsic(1, 2);
+            float reprojErr = std::sqrt( (projX-kpt.getX())*(projX-kpt.getX()) + (projY-kpt.getY())*(projY-kpt.getY()) );
+            if (reprojErr > m_reprojErrorThres)
+                kf->removeVisibility(visi.first, visi.second);
+        }
+    }
 
 	return nbRemovedKfs;
 }
