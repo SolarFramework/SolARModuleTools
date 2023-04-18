@@ -64,6 +64,7 @@ xpcf::XPCFErrorCode SolARSLAMTracking::onConfigured()
 	m_reprojErrorThreshold = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("reprojErrorThreshold")->getFloatingValue();
 	m_thresConfidence = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("thresConfidence")->getFloatingValue();
 	m_minNbInliers = m_pnpRansac->bindTo<xpcf::IConfigurable>()->getProperty("minNbInliers")->getIntegerValue();
+	m_boWFeatureFromMatchedDescriptors = m_mapManager->bindTo<xpcf::IConfigurable>()->getProperty("boWFeatureFromMatchedDescriptors")->getIntegerValue();
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
@@ -91,15 +92,17 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	// init image to display
 	displayImage = frame->getView()->copy();
 	LOG_DEBUG("Number keypoints: {}", frame->getKeypoints().size());
-	if (frame->getKeypoints().size() == 0)
-		return FrameworkReturnCode::_ERROR_;
+       if (frame->getKeypoints().size() == 0) {
+           LOG_ERROR("Cannot track frame since number of keypoints is zero");
+           return FrameworkReturnCode::_ERROR_;
+       }
 	std::vector<DescriptorMatch> matches;
 	Transform3Df framePose = frame->getPose();
     // lost tracking try to relocalize
 	if (m_isLostTrack) {
 		LOG_DEBUG("Tracking lost and try to relocalize");		
 		// reloc
-		std::vector < uint32_t> retKeyframesId;
+		std::vector<uint32_t> retKeyframesId;
 		if (m_keyframeRetriever->retrieve(frame, retKeyframesId) == FrameworkReturnCode::_SUCCESS) {
 			LOG_DEBUG("Successful relocalization. Update reference keyframe id: {}", retKeyframesId[0]);
 			SRef<Keyframe> bestRetKeyframe;
@@ -126,13 +129,23 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	if (framePose.isApprox(Transform3Df::Identity()))
 		m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints());
     else {
-        SRef<CameraParameters> camParamsTmp;
+        SRef<CameraParameters> camParamsTmp, camParamsTmp2;
         if (m_cameraParametersManager->getCameraParameters(m_referenceKeyframe->getCameraID(), camParamsTmp) != FrameworkReturnCode :: _SUCCESS)    {
             LOG_ERROR("Camera parameters with id {} does not exists in the camera parameters manager", m_referenceKeyframe->getCameraID());
             return FrameworkReturnCode::_ERROR_;
         }
-        m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_referenceKeyframe->getPose(), framePose, camParamsTmp->intrinsic);
+        if (m_cameraParametersManager->getCameraParameters(frame->getCameraID(), camParamsTmp2) != FrameworkReturnCode :: _SUCCESS)    {
+            LOG_ERROR("Camera parameters with id {} does not exists in the camera parameters manager", frame->getCameraID());
+            return FrameworkReturnCode::_ERROR_;
+        }
+        m_matchesFilter->filter(matches, matches, m_referenceKeyframe->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_referenceKeyframe->getPose(), framePose, camParamsTmp->intrinsic, camParamsTmp2->intrinsic);
     }
+
+	// set matched map at keypoint to true in keyframe 
+	if (m_boWFeatureFromMatchedDescriptors > 0) {
+		for (const auto& match : matches)
+			m_referenceKeyframe->setKeypointStatusToMatched(match.getIndexInDescriptorA());
+	}
 
 	float maxMatchDistance = -FLT_MAX;
 	for (const auto &it : matches)
@@ -144,11 +157,13 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	std::vector<CloudPoint> foundPoints;
 	std::vector<DescriptorMatch> foundMatches;
 	std::vector<DescriptorMatch> remainingMatches;
-	std::vector < std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
+	std::vector<std::pair<uint32_t, SRef<CloudPoint>>> corres2D3D;
 	m_corr2D3DFinder->find(m_referenceKeyframe, frame, matches, pt3d, pt2d, corres2D3D, foundMatches, remainingMatches);
 	LOG_DEBUG("Nb of 2D-3D correspondences: {}", pt2d.size());	
-	if (pt2d.size() == 0)
+	if (pt2d.size() == 0) {
+        LOG_ERROR("No 2D-3D correspondences found between frame and reference keyframe");
 		return FrameworkReturnCode::_ERROR_;
+    }
 
 	// find initial pose
     SRef<CameraParameters> camParams;
@@ -176,7 +191,7 @@ FrameworkReturnCode SolARSLAMTracking::process(const SRef<Frame> frame, SRef<Ima
 	std::set<uint32_t> idxCPSeen;
 	// Define inlier/outlier of 2D-3D correspondences found by the reference keyframe
 	{
-		std::vector< Point2Df > pt3DProj;		
+		std::vector<Point2Df> pt3DProj;		
         m_projector->project(pt3d, framePose, *camParams, pt3DProj);
 		for (int i = 0; i < pt3DProj.size(); ++i) {
 			if ((pt2d[i] - pt3DProj[i]).norm() < m_reprojErrorThreshold) {

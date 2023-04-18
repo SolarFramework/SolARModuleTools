@@ -97,6 +97,7 @@ private:
 	float																		m_minWeightNeighbor = 1.f;
 	int																			m_maxNbNeighborKfs = 5;	
 	int																			m_isSaveImage = 0;
+    int                                                                         m_boWFeatureFromMatchedDescriptors = 0;
     bool                                                                        m_idle = true;
     std::mutex                                                                  m_mutexIdle;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;

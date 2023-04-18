@@ -37,10 +37,12 @@ SolARCameraParametersManager::SolARCameraParametersManager():ComponentBase(xpcf:
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef<CameraParameters> cameraParameters)
 {
     m_cameraParametersCollection->acquireLock();
-    const auto [lb, ub] = m_camParamsSet.equal_range(*cameraParameters);
-    if (lb != m_camParamsSet.end())
+
+    std::vector<SRef<CameraParameters>> cameraParametersVector;
+
+    if (m_cameraParametersCollection->getAllCameraParameters(cameraParametersVector) == FrameworkReturnCode::_SUCCESS)
     {
-        for (auto it = lb; it != ub; it++)
+        for (const auto & it : cameraParametersVector)
         {
             if (it->intrinsic == cameraParameters->intrinsic &&
                 it->distortion == cameraParameters->distortion &&
@@ -55,33 +57,19 @@ FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(const SRef
             }
         }
     }
-    m_camParamsSet.insert(*cameraParameters);
+    else
+    {
+        LOG_ERROR("Error getting camera parameters collection");
+        return FrameworkReturnCode::_ERROR_;
+    }
+
     return m_cameraParametersCollection->addCameraParameters(cameraParameters);
 }
 
 FrameworkReturnCode SolARCameraParametersManager::addCameraParameters(CameraParameters & cameraParameters)
 {
-    m_cameraParametersCollection->acquireLock();
-    const auto [lb, ub] = m_camParamsSet.equal_range(cameraParameters);
-    if (lb != m_camParamsSet.end())
-    {
-        for (auto it = lb; it != ub; it++)
-        {
-            if (it->intrinsic == cameraParameters.intrinsic &&
-                it->distortion == cameraParameters.distortion &&
-                it->type == cameraParameters.type &&
-                it->resolution.width == cameraParameters.resolution.width &&
-                it->resolution.height == cameraParameters.resolution.height &&
-                it->name == cameraParameters.name)
-            {
-                // A Camera parameters with the same characteristics already exists.
-                cameraParameters.id = it->id;
-                return FrameworkReturnCode::_SUCCESS;
-            }
-        }
-    }
-    m_camParamsSet.insert(cameraParameters);
-    return m_cameraParametersCollection->addCameraParameters(cameraParameters);
+    SRef<CameraParameters> camParamsSref = xpcf::utils::make_shared<CameraParameters>(cameraParameters);
+    return addCameraParameters(camParamsSref );
 }
 
 FrameworkReturnCode SolARCameraParametersManager::getCameraParameters(const uint32_t id, SRef<CameraParameters> & cameraParameters) const
@@ -111,25 +99,7 @@ FrameworkReturnCode SolARCameraParametersManager::getAllCameraParameters(std::ve
 FrameworkReturnCode SolARCameraParametersManager::suppressCameraParameters(const uint32_t id)
 {
     m_cameraParametersCollection->acquireLock();
-    CameraParameters cameraParameters;
-    m_cameraParametersCollection->getCameraParameters(id, cameraParameters);
-    const auto [lb, ub] = m_camParamsSet.equal_range(cameraParameters);
-    if (lb != m_camParamsSet.end())
-    {
-        for (auto it = lb; it != ub; it++)
-        {
-            if (it->intrinsic == cameraParameters.intrinsic &&
-                it->distortion == cameraParameters.distortion &&
-                it->type == cameraParameters.type &&
-                it->resolution.width == cameraParameters.resolution.width &&
-                it->resolution.height == cameraParameters.resolution.height &&
-                it->name == cameraParameters.name)
-            {
-               m_camParamsSet.erase(it);
-               break;
-            }
-        }
-    }
+
     return m_cameraParametersCollection->suppressCameraParameters(id);
 }
 
@@ -147,29 +117,22 @@ int SolARCameraParametersManager::getNbCameraParameters() const
 
 FrameworkReturnCode SolARCameraParametersManager::saveToFile(const std::string& file) const
 {
-	std::ofstream ofs(file, std::ios::binary);
-	OutputArchive oa(ofs);
+    std::ofstream ofs(file, std::ios::binary);
+    OutputArchive oa(ofs);
     oa << m_cameraParametersCollection;
-	ofs.close();
-	return FrameworkReturnCode::_SUCCESS;
+    ofs.close();
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 FrameworkReturnCode SolARCameraParametersManager::loadFromFile(const std::string& file)
 {
     std::ifstream ifs(file, std::ios::binary);
-	if (!ifs.is_open())
-		return FrameworkReturnCode::_ERROR_;
+    if (!ifs.is_open())
+        return FrameworkReturnCode::_ERROR_;
     InputArchive ia(ifs);
     ia >> m_cameraParametersCollection;
-	ifs.close();
-    m_camParamsSet.clear();
-    std::vector<SRef<CameraParameters>> cameraParameters;
-    getAllCameraParameters(cameraParameters);
-    for (auto camParams : cameraParameters)
-    {
-        m_camParamsSet.insert(*camParams);
-    }
-	return FrameworkReturnCode::_SUCCESS;
+    ifs.close();
+    return FrameworkReturnCode::_SUCCESS;
 }
 
 const SRef<datastructure::CameraParametersCollection>& SolARCameraParametersManager::getConstCameraParametersCollection() const

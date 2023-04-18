@@ -120,6 +120,7 @@ private:
     int                                                             m_nbVisibilityAtLeast = 20;
     int                                                             m_nbPassedFrameAtLeast = 5;
     float                                                           m_ratioCPRefKeyframe = 0.6;
+    int                                                             m_boWFeatureFromMatchedDescriptors = 0;
     std::mutex                                                      m_newKeyframeMutex;
     std::mutex                                                      m_needNewKeyframe;
     SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
