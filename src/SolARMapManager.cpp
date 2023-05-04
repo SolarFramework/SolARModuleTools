@@ -48,6 +48,7 @@ SolARMapManager::SolARMapManager():ConfigurableBase(xpcf::toUUID<SolARMapManager
 	declareProperty("reprojErrorThreshold", m_reprojErrorThres);
 	declareProperty("thresConfidence", m_thresConfidence);
 	declareProperty("ratioRedundantObs", m_ratioRedundantObs);
+	declareProperty("boWFeatureFromMatchedDescriptors", m_boWFeatureFromMatchedDescriptors);
 	LOG_DEBUG("SolARMapManager constructor");
 }
 
@@ -406,7 +407,7 @@ int SolARMapManager::keyframePruning(const std::vector<SRef<Keyframe>>& keyframe
 
 	int nbRemovedKfs(0);
 	for (const auto &itKf : keyframesPruning) {
-		if (itKf->getId() == 0)
+		if (itKf->getId() == 0 || itKf->isFixedPose())
 			continue;
 		const std::map<uint32_t, uint32_t>& pcVisibility = itKf->getVisibility();
 		int nbRedundantObs(0);
