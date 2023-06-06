@@ -159,6 +159,9 @@ public:
 	/// @param[in] keyframes: the keyframes are checked to prune
 	int keyframePruning(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes = {}) override;
 
+	/// @brief Prune visibilities of a map 
+	FrameworkReturnCode visibilityPruning() override;
+
 	/// @brief Save the map to the external file
     /// @return FrameworkReturnCode::_SUCCESS_ if the backup succeeds, else FrameworkReturnCode::_ERROR.
     FrameworkReturnCode saveToFile() const override;
