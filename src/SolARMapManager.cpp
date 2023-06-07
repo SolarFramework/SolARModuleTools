@@ -451,8 +451,8 @@ FrameworkReturnCode SolARMapManager::visibilityPruning()
             Keypoint kpt = kf->getUndistortedKeypoint(visi.first);
             SRef<CloudPoint> cloudPoint;
             if (m_pointCloudManager->getPoint(visi.second, cloudPoint) != FrameworkReturnCode::_SUCCESS) {
-                LOG_ERROR("Failed to get cloud point");
-                return FrameworkReturnCode::_ERROR_;
+                kf->removeVisibility(visi.first, visi.second);
+                continue;
             }
             Vector3f ptSolar(cloudPoint->getX(), cloudPoint->getY(), cloudPoint->getZ());
             auto ptCamera = pose*ptSolar;
