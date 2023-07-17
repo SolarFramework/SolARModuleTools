@@ -30,20 +30,19 @@ namespace TOOLS {
 SolARStereoFeatureExtractionAndDepthEstimation::SolARStereoFeatureExtractionAndDepthEstimation() :ConfigurableBase(xpcf::toUUID<SolARStereoFeatureExtractionAndDepthEstimation>())
 {
     addInterface<api::features::IFeatureWithDepthFromStereo>(this);
-    m_keypointsDetector.resize(2);
     m_descriptorExtractor.resize(2);
     m_undistortPoints.resize(2);
     m_stereoRectificator.resize(2);
     for (int i = 0; i < 2; ++i) {
 		std::string name = std::to_string(i);
-        declareInjectable<api::features::IKeypointDetector>(m_keypointsDetector[i], name.c_str());
-        declareInjectable<api::features::IDescriptorsExtractor>(m_descriptorExtractor[i], name.c_str());
+        declareInjectable<api::features::IDescriptorsExtractorFromImage>(m_descriptorExtractor[i], name.c_str());
         declareInjectable<api::geom::IUndistortPoints>(m_undistortPoints[i], name.c_str());
         declareInjectable<api::geom::I2DPointsRectification>(m_stereoRectificator[i], name.c_str());
     }
     declareInjectable<api::features::IDescriptorMatcherStereo>(m_stereoMatcher);
     declareInjectable<api::geom::IDepthEstimation>(m_stereoDepthEstimator);
     declareInjectable<api::geom::IReprojectionStereo>(m_stereoReprojector);
+    declareProperty("isMultithreading", m_isMultithreading);
     LOG_DEBUG("SolARStereoFeatureExtractionAndDepthEstimation constructor");
 }
 
@@ -60,8 +59,6 @@ void SolARStereoFeatureExtractionAndDepthEstimation::setRectificationParameters(
 	m_rectParams[1] = rectParams2;
 	m_camParams[0] = camParams1;
 	m_camParams[1] = camParams2;
-	for (int i = 0; i < 2; ++i)
-		m_undistortPoints[i]->setCameraParameters(m_camParams[i].intrinsic, m_camParams[i].distortion);
 	m_isSetParams = true;
 	m_isPassRectify.resize(2, false);
 	// No need rectify if rectification rotation parameter is identity
@@ -81,14 +78,20 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
     std::vector<std::vector<Keypoint>> undistortedKeypoints(2);
     std::vector<std::vector<Keypoint>> undistortedRectifiedKeypoints(2);
     std::vector<SRef<DescriptorBuffer>> descriptors(2);
-    std::thread thread1(&SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify, this, 0, 
-		image1, std::ref(keypoints[0]), std::ref(undistortedKeypoints[0]), 
-		std::ref(undistortedRectifiedKeypoints[0]), std::ref(descriptors[0]));
-    std::thread thread2(&SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify, this, 1, 
-		image2, std::ref(keypoints[1]), std::ref(undistortedKeypoints[1]), 
-		std::ref(undistortedRectifiedKeypoints[1]), std::ref(descriptors[1]));
-    thread1.join();
-    thread2.join();
+    if (m_isMultithreading){
+        std::thread thread1(&SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify, this, 0,
+            image1, std::ref(keypoints[0]), std::ref(undistortedKeypoints[0]),
+            std::ref(undistortedRectifiedKeypoints[0]), std::ref(descriptors[0]));
+        std::thread thread2(&SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify, this, 1,
+            image2, std::ref(keypoints[1]), std::ref(undistortedKeypoints[1]),
+            std::ref(undistortedRectifiedKeypoints[1]), std::ref(descriptors[1]));
+        thread1.join();
+        thread2.join();
+    }
+    else {
+        extractAndRectify(0, image1, keypoints[0], undistortedKeypoints[0], undistortedRectifiedKeypoints[0], descriptors[0]);
+        extractAndRectify(1, image2, keypoints[1], undistortedKeypoints[1], undistortedRectifiedKeypoints[1], descriptors[1]);
+    }
 	if ((keypoints[0].size() == 0) || (keypoints[1].size() == 0))
 		return FrameworkReturnCode::_ERROR_;
     // stereo feature matching
@@ -110,19 +113,17 @@ FrameworkReturnCode SolARStereoFeatureExtractionAndDepthEstimation::compute(SRef
 	}
 
     // make frames
-    frame1 = xpcf::utils::make_shared<Frame>(keypoints[0], undistortedKeypoints[0], descriptors[0], image1);
-    frame2 = xpcf::utils::make_shared<Frame>(keypoints[1], undistortedKeypoints[1], descriptors[1], image2);
+    frame1 = xpcf::utils::make_shared<Frame>(keypoints[0], undistortedKeypoints[0], descriptors[0], image1, m_camParams[0].id);
+    frame2 = xpcf::utils::make_shared<Frame>(keypoints[1], undistortedKeypoints[1], descriptors[1], image2, m_camParams[1].id);
 
     return FrameworkReturnCode::_SUCCESS;
 }
 
 void SolARStereoFeatureExtractionAndDepthEstimation::extractAndRectify(int indexCamera, SRef<datastructure::Image> image, std::vector<datastructure::Keypoint>& keypoints, std::vector<datastructure::Keypoint>& undistortedKeypoints, std::vector<datastructure::Keypoint>& undistortedRectifiedKeypoints, SRef<datastructure::DescriptorBuffer>& descriptors)
 {
-    m_keypointsDetector[indexCamera]->detect(image, keypoints);
-	if (keypoints.size() == 0)
-		return;
-    m_undistortPoints[indexCamera]->undistort(keypoints, undistortedKeypoints);
-    m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors);	
+    if (m_descriptorExtractor[indexCamera]->extract(image, keypoints, descriptors) != FrameworkReturnCode::_SUCCESS)
+        return;
+    m_undistortPoints[indexCamera]->undistort(keypoints, m_camParams[indexCamera], undistortedKeypoints);
 	if (!m_isPassRectify[indexCamera])
 		m_stereoRectificator[indexCamera]->rectify(undistortedKeypoints, m_camParams[indexCamera], m_rectParams[indexCamera], undistortedRectifiedKeypoints);
 	else

@@ -26,6 +26,7 @@ namespace TOOLS {
  * @SolARComponentInjectable{SolAR::api::storage::IPointCloudManager}
  * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
  * @SolARComponentInjectable{SolAR::api::storage::ICovisibilityGraph}
+ * @SolARComponentInjectable{SolAR::api::storage::ICameraParametersCollection}
  * @SolARComponentInjectable{SolAR::api::reloc::IKeyframeRetriever}
  * @SolARComponentInjectablesEnd
  *
@@ -128,6 +129,28 @@ public:
 	/// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
     FrameworkReturnCode removeKeyframe(const SRef<SolAR::datastructure::Keyframe> keyframe) override;
 
+    /// @brief Add camera parameters to map manager
+    /// @param[in] cameraParameters the camera paramaters to add to the map manager
+    /// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode addCameraParameters(const SRef<SolAR::datastructure::CameraParameters> cameraParameters) override;
+
+    /// @brief Remove camera parameters from map manager
+    /// @param[in] cameraParameters the camera parameters to remove from the map manager
+    /// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode removeCameraParameters(const SRef<SolAR::datastructure::CameraParameters> cameraParameters) override;
+
+    /// @brief Get camera parameters from map manager
+    /// @param[in] id the id of the camera parameters
+    /// @param[out] cameraParameters the camera parameters to get from the map manager
+    /// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode getCameraParameters(const uint32_t id, SRef<SolAR::datastructure::CameraParameters>& cameraParameters) override;
+
+    /// @brief Get camera parameters from map manager
+    /// @param[in] id the id of the camera parameters
+    /// @param[out] cameraParameters the camera parameters to get from the map manager
+    /// @return FrameworkReturnCode::_SUCCESS if succeed, else FrameworkReturnCode::_ERROR_
+    FrameworkReturnCode getCameraParameters(const uint32_t id, SolAR::datastructure::CameraParameters & cameraParameters) override;
+
 	/// @brief Prune cloud points of a map
     /// @param[in] cloudPoints: the cloud points are checked to prune
 	int pointCloudPruning(const std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoints = {}) override;
@@ -135,6 +158,9 @@ public:
 	/// @brief Prune keyframes of a map
 	/// @param[in] keyframes: the keyframes are checked to prune
 	int keyframePruning(const std::vector<SRef<SolAR::datastructure::Keyframe>> &keyframes = {}) override;
+
+	/// @brief Prune visibilities of a map 
+	FrameworkReturnCode visibilityPruning() override;
 
 	/// @brief Save the map to the external file
     /// @return FrameworkReturnCode::_SUCCESS_ if the backup succeeds, else FrameworkReturnCode::_ERROR.
@@ -155,6 +181,7 @@ private:
 	SRef<SolAR::datastructure::Map>							m_map;
 	SRef<SolAR::api::storage::IPointCloudManager>			m_pointCloudManager;
 	SRef<SolAR::api::storage::IKeyframesManager>			m_keyframesManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>		m_cameraParametersManager;
 	SRef<SolAR::api::storage::ICovisibilityGraphManager>	m_covisibilityGraphManager;
 	SRef<SolAR::api::reloc::IKeyframeRetriever>				m_keyframeRetriever;
 
@@ -163,12 +190,14 @@ private:
 	std::string					m_coordinateFileName;
 	std::string					m_pcManagerFileName;
 	std::string					m_kfManagerFileName;
+    std::string					m_cpManagerFileName;
 	std::string					m_covisGraphFileName;
 	std::string					m_kfRetrieverFileName;
 
     float						m_reprojErrorThres = 3.0f;
     float						m_thresConfidence = 0.3f;
     float						m_ratioRedundantObs = 0.9f;
+	int   						m_boWFeatureFromMatchedDescriptors = 0;
 };
 }
 }

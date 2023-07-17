@@ -33,6 +33,7 @@ SolARSLAMBootstrapper::SolARSLAMBootstrapper() :ConfigurableBase(xpcf::toUUID<So
 {
 	addInterface<api::slam::IBootstrapper>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
+    declareInjectable<api::storage::ICameraParametersManager>(m_cameraParametersManager);
 	declareInjectable<api::features::IDescriptorMatcher>(m_matcher);
 	declareInjectable<api::features::IMatchesFilter>(m_matchesFilter);
 	declareInjectable<api::solver::map::ITriangulator>(m_triangulator);
@@ -50,14 +51,7 @@ xpcf::XPCFErrorCode SolARSLAMBootstrapper::onConfigured()
 {
 	LOG_DEBUG("SolARSLAMBootstrapper onConfigured");
 	m_ratioDistanceIsKeyframe = m_keyframeSelector->bindTo<xpcf::IConfigurable>()->getProperty("minMeanDistanceIsKeyframe")->getFloatingValue();
-	return xpcf::XPCFErrorCode::_SUCCESS;
-}
-
-void SolARSLAMBootstrapper::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_triangulator->setCameraParameters(m_camMatrix, m_camDistortion);
-	m_poseFinderFrom2D2D->setCameraParameters(m_camMatrix, m_camDistortion);
+    return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
 inline float angleCamDistance(const Transform3Df & pose1, const Transform3Df & pose2) {
@@ -76,7 +70,7 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 	
 	if (!m_initKeyframe1) {
 		// init first keyframe
-		m_initKeyframe1 = true;		
+        m_initKeyframe1 = true;
         m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 	}
 	else {
@@ -93,18 +87,25 @@ FrameworkReturnCode SolARSLAMBootstrapper::process(const SRef<Frame>& frame, SRe
 			m_keyframe1 = xpcf::utils::make_shared<Keyframe>(frame);
 		}
 		else if (m_keyframeSelector->select(frame, matches)) {
-			// Find pose of the second keyframe if not has pose
-			if (!m_hasPose) {
+            CameraParameters camParams;
+            if (m_cameraParametersManager->getCameraParameters(frame->getCameraID(), camParams) != FrameworkReturnCode :: _SUCCESS)
+            {
+                LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", frame->getCameraID());
+                return FrameworkReturnCode::_ERROR_;
+            }
+            // Find pose of the second keyframe if not has pose
+            if (!m_hasPose) {
 				Transform3Df pose;
-                m_poseFinderFrom2D2D->estimate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getPose(), pose, matches);
+                m_poseFinderFrom2D2D->estimate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), camParams, m_keyframe1->getPose(), pose, matches);
 				frame->setPose(pose);
 			}
 			if (angleCamDistance(m_keyframe1->getPose(), frame->getPose()) > m_angleThres)
 				return FrameworkReturnCode::_ERROR_;
 			// Triangulate
 			std::vector<SRef<CloudPoint>> cloud, filteredCloud;
-            m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), m_keyframe1->getDescriptors(), frame->getDescriptors(), matches,
-				std::make_pair(0, 1), m_keyframe1->getPose(), frame->getPose(), cloud);
+            m_triangulator->triangulate(m_keyframe1->getUndistortedKeypoints(), frame->getUndistortedKeypoints(), 
+				m_keyframe1->getDescriptors(), frame->getDescriptors(), matches, std::make_pair(0, 1), 
+                m_keyframe1->getPose(), frame->getPose(), camParams, camParams, cloud);
 			// Filter cloud points
 			m_mapFilter->filter(m_keyframe1->getPose(), frame->getPose(), cloud, filteredCloud);
 			if (filteredCloud.size() > m_nbMinInitPointCloud) {

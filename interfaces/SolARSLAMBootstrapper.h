@@ -40,6 +40,7 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{ SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{ SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IMatchesFilter}
 * @SolARComponentInjectable{SolAR::api::solver::map::ITriangulator}
@@ -71,11 +72,6 @@ public:
 	SolARSLAMBootstrapper();
 	///@brief SolAR3DTransformEstimationFrom3D3D destructor;
 	~SolARSLAMBootstrapper() = default;
-	
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distortionParams) override;
 
 	/// @brief This method uses images to boostrap mapping
 	/// @param[in] frame input image to process
@@ -95,9 +91,8 @@ private:
     bool                                                        m_bootstrapOk = false;
     bool                                                        m_initKeyframe1 = false;
     SRef<SolAR::datastructure::Keyframe>                        m_keyframe1, m_keyframe2;
-    SolAR::datastructure::CamCalibration                        m_camMatrix;
-    SolAR::datastructure::CamDistortion                         m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>						m_mapManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>			m_cameraParametersManager;
     SRef<SolAR::api::features::IDescriptorMatcher>				m_matcher;
     SRef<SolAR::api::features::IMatchesFilter>					m_matchesFilter;
     SRef<SolAR::api::solver::map::ITriangulator>				m_triangulator;

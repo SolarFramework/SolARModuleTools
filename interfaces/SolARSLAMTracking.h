@@ -43,6 +43,7 @@ namespace TOOLS {
 *
 * @SolARComponentInjectablesBegin
 * @SolARComponentInjectable{SolAR::api::storage::IMapManager}
+* @SolARComponentInjectable{SolAR::api::storage::ICameraParametersManager}
 * @SolARComponentInjectable{SolAR::api::storage::IKeyframesManager}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcher}
 * @SolARComponentInjectable{SolAR::api::features::IDescriptorMatcherRegion}
@@ -80,11 +81,6 @@ public:
 	~SolARSLAMTracking() = default;
 
 	org::bcom::xpcf::XPCFErrorCode onConfigured() override final;
-
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] Camera calibration matrix parameters.
-	/// @param[in] Camera distorsion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distorsionParams) override;
 	
 	/// @brief this method is used to set new keyframe for tracking process
 	/// @param[in] newKeyframme the new keyframe
@@ -124,10 +120,9 @@ private:
     int                                                             m_nbVisibilityAtLeast = 20;
     int                                                             m_nbPassedFrameAtLeast = 5;
     float                                                           m_ratioCPRefKeyframe = 0.6;
+    int                                                             m_boWFeatureFromMatchedDescriptors = 0;
     std::mutex                                                      m_newKeyframeMutex;
     std::mutex                                                      m_needNewKeyframe;
-    SolAR::datastructure::CamCalibration                            m_camMatrix;
-    SolAR::datastructure::CamDistortion                             m_camDistortion;
     SRef<SolAR::api::storage::IMapManager>                          m_mapManager;
     SRef<SolAR::api::features::IDescriptorMatcher>                  m_matcher;
     SRef<SolAR::api::features::IDescriptorMatcherRegion>            m_matcherRegion;
@@ -138,6 +133,7 @@ private:
     SRef<SolAR::api::solver::pose::I3DTransformFinderFrom2D3D>      m_pnp;
     SRef<SolAR::api::geom::IProject>                                m_projector;
     SRef<SolAR::api::reloc::IKeyframeRetriever>                     m_keyframeRetriever;
+    SRef<SolAR::api::storage::ICameraParametersManager>             m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>                    m_keyframesManager;
     SRef<SolAR::api::storage::IPointCloudManager>                   m_pointCloudManager;
 };

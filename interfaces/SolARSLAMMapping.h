@@ -73,10 +73,6 @@ public:
 	///@brief SolARSLAMMapping destructor;
 	~SolARSLAMMapping() = default;
 
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] camParams Camera parameters.
-	void setCameraParameters(const SolAR::datastructure::CameraParameters & camParams) override;
-
     /// @brief check the mapping process is idle
     /// @return true if the mapping process is idle, else false
     bool idle() override;
@@ -86,11 +82,14 @@ public:
     /// @param[out] keyframe: new keyframe or new reference keyframe found.
     FrameworkReturnCode process(const SRef<SolAR::datastructure::Frame> frame, SRef<SolAR::datastructure::Keyframe> & keyframe) override;
 
+    /// @brief Method called when all component injections have been done
+    void onInjected() override;
+
 	void unloadComponent() override final;
 
 private:
 	void updateAssociateCloudPoint(const SRef<SolAR::datastructure::Keyframe> &keyframe);
-	void findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
+    FrameworkReturnCode findMatchesAndTriangulation(const SRef<SolAR::datastructure::Keyframe> & keyframe, const std::vector<uint32_t> &idxBestNeighborKfs, std::vector<SRef<SolAR::datastructure::CloudPoint>> &cloudPoint);
 	void cloudPointsCulling(const SRef<SolAR::datastructure::Keyframe> &keyframe);
     void setIdle(bool flag);
 
@@ -98,16 +97,17 @@ private:
 	float																		m_minWeightNeighbor = 1.f;
 	int																			m_maxNbNeighborKfs = 5;	
 	int																			m_isSaveImage = 0;
+    int                                                                         m_boWFeatureFromMatchedDescriptors = 0;
     bool                                                                        m_idle = true;
     std::mutex                                                                  m_mutexIdle;
-    SolAR::datastructure::CameraParameters										m_camParams;
     SRef<SolAR::api::storage::ICovisibilityGraphManager>                        m_covisibilityGraphManager;
+    SRef<SolAR::api::storage::ICameraParametersManager>							m_cameraParametersManager;
     SRef<SolAR::api::storage::IKeyframesManager>								m_keyframesManager;
     SRef<SolAR::api::reloc::IKeyframeRetriever>									m_keyframeRetriever;
     SRef<SolAR::api::storage::IMapManager>                                      m_mapManager;
     SRef<SolAR::api::storage::IPointCloudManager>								m_pointCloudManager;
     SRef<SolAR::api::solver::map::ITriangulator>								m_triangulator;
-    SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilter;
+    SRef<SolAR::api::solver::map::IMapFilter>									m_mapFilterMono, m_mapFilterStereo;
     SRef<SolAR::api::features::IDescriptorMatcherGeometric>						m_matcher;
 	std::map<uint32_t, std::pair<SRef<SolAR::datastructure::CloudPoint>, uint32_t>>	m_recentAddedCloudPoints;
 };

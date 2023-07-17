@@ -62,10 +62,8 @@ int main(int argc, char* argv[])
 	LOG_INFO("Number of used fiducial markers: {}", fiducialMarkers.size());
 	// set fiducial markers to pose estimator
 	poseEstimator->setTrackables(fiducialMarkers);
-	// set camera parameters
+	// get camera parameters
 	CameraParameters camParams = camera->getParameters();
-	poseEstimator->setCameraParameters(camParams.intrinsic, camParams.distortion);
-	overlay3D->setCameraParameters(camParams.intrinsic, camParams.distortion);
 
 	// start camera
 	if (camera->start() != FrameworkReturnCode::_SUCCESS) {
@@ -81,8 +79,8 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 		Transform3Df pose;
-		if (poseEstimator->estimate(image, pose) == FrameworkReturnCode::_SUCCESS)
-			overlay3D->draw(pose, image);
+		if (poseEstimator->estimate(image, camParams, pose) == FrameworkReturnCode::_SUCCESS)
+			overlay3D->draw(pose, camParams, image);
 		if (viewer->display(image) != FrameworkReturnCode::_SUCCESS)
 			break;
 

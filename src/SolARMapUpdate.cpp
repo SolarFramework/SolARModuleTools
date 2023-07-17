@@ -32,6 +32,7 @@ SolARMapUpdate::SolARMapUpdate():ConfigurableBase(xpcf::toUUID<SolARMapUpdate>()
 {
     addInterface<api::solver::map::IMapUpdate>(this);
 	declareInjectable<api::storage::IMapManager>(m_mapManager);
+    declareInjectable<api::storage::ICameraParametersManager>(m_cameraParametersManager);
 	declareInjectable<api::geom::IProject>(m_projector);
 	declareInjectable<api::features::IDescriptorMatcherRegion>(m_matcher);
 	declareProperty("thresAngleViewDirection", m_thresAngleViewDirection);
@@ -47,12 +48,6 @@ xpcf::XPCFErrorCode SolARMapUpdate::onConfigured()
 	return xpcf::XPCFErrorCode::_SUCCESS;
 }
 
-void SolARMapUpdate::setCameraParameters(const SolAR::datastructure::CameraParameters & camParams)
-{
-    m_camParams = camParams;
-    m_projector->setCameraParameters(camParams.intrinsic, camParams.distortion);
-}
-
 float SolARMapUpdate::cosineViewDirectionAngle(const SRef<Frame>& frame, const SRef<CloudPoint>& cloudPoint)
 {
 	const Transform3Df &pose = frame->getPose();
@@ -63,7 +58,7 @@ float SolARMapUpdate::cosineViewDirectionAngle(const SRef<Frame>& frame, const S
 
 FrameworkReturnCode SolARMapUpdate::update(SRef<datastructure::Map> globalMap, const std::vector<uint32_t>& newKeyframeIds)
 {
-	m_mapManager->setMap(globalMap);
+    m_mapManager->setMap(globalMap);
 	m_covisibilityGraph = globalMap->getConstCovisibilityGraph();
 	m_pointCloud = globalMap->getConstPointCloud();
 	m_keyframeCollection = globalMap->getConstKeyframeCollection();
@@ -80,14 +75,15 @@ FrameworkReturnCode SolARMapUpdate::update(SRef<datastructure::Map> globalMap, c
 		std::vector<uint32_t> neighbors;
 		m_covisibilityGraph->getNeighbors(kfId, 1.f, neighbors);
 		std::vector<uint32_t> validNeighbors;
-		for (const auto& it : neighbors)
+        // search for Id of neighbor keyframes that are not new keyframes
+        for (const auto& it : neighbors)
 			if (setKfIds.find(it) == setKfIds.end())
 				validNeighbors.push_back(it);
 		if (validNeighbors.size() == 0)
 			continue;
 		std::vector<SRef<Keyframe>> neighborKeyframes;
 		m_keyframeCollection->getKeyframes(validNeighbors, neighborKeyframes);
-		// get cloud points seen by neighbor keyframes
+        // get cloud points seen by neighbor keyframes (h=which are not new keyframes)
 		std::set<uint32_t> idxLocalCloudPoints;
 		for (const auto &kf : neighborKeyframes) {
 			const std::map<uint32_t, uint32_t>& mapPointVisibility = kf->getVisibility();
@@ -118,13 +114,19 @@ FrameworkReturnCode SolARMapUpdate::update(SRef<datastructure::Map> globalMap, c
 
 void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& localCloudPoints, SRef<Keyframe> newKeyframe, std::vector<SRef<CloudPoint>>& notMatchedCloudPoints)
 {
-    uint32_t imgWidth = m_camParams.resolution.width;
-    uint32_t imgHeight = m_camParams.resolution.height;
+    SRef<CameraParameters> camParams;
+    if (m_cameraParametersManager->getCameraParameters(newKeyframe->getCameraID(), camParams) != FrameworkReturnCode :: _SUCCESS)
+    {
+        LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", newKeyframe->getCameraID());
+        return;
+    }
+    uint32_t imgWidth = camParams->resolution.width;
+    uint32_t imgHeight = camParams->resolution.height;
 	const std::map<uint32_t, uint32_t>& keyframeVisibilities = newKeyframe->getVisibility();
 	std::set<uint32_t> seenCPIds;
 	for (const auto& it : keyframeVisibilities)
 		seenCPIds.insert(it.second);	
-	// find other visiblities from local map
+    // find local cloud points of the global map visible by neighbors of the new keyframe, which are really visible by the new keyframe
 	std::vector<SRef<CloudPoint>> localMapUnseen;
 	for (auto &itCP : localCloudPoints)
 		if (itCP->isValid() && (seenCPIds.find(itCP->getId()) == seenCPIds.end()) && (cosineViewDirectionAngle(newKeyframe, itCP) > m_thresAngleViewDirection))
@@ -134,7 +136,7 @@ void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& lo
 	std::vector< Point2Df > projected2DPtsCandidates;
 	if (localMapUnseen.size() > 0) {
 		std::vector< Point2Df > projected2DPts;
-		m_projector->project(localMapUnseen, projected2DPts, newKeyframe->getPose());
+        m_projector->project(localMapUnseen, newKeyframe->getPose(), *camParams, projected2DPts);
 		for (int idx = 0; idx < projected2DPts.size(); idx++)
 			if ((projected2DPts[idx].getX() > 0) && (projected2DPts[idx].getX() < imgWidth) && (projected2DPts[idx].getY() > 0) && (projected2DPts[idx].getY() < imgHeight)) {
 				projected2DPtsCandidates.push_back(projected2DPts[idx]);
@@ -172,10 +174,16 @@ void SolARMapUpdate::matchLocalMapPoints(const std::vector<SRef<CloudPoint>>& lo
 
 void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newKeyframe, std::vector<SRef<datastructure::CloudPoint>>& notMatchedCloudPoints)
 {
+    SRef<CameraParameters> camParams;
+    if (m_cameraParametersManager->getCameraParameters(newKeyframe->getCameraID(), camParams) != FrameworkReturnCode :: _SUCCESS)
+    {
+        LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", newKeyframe->getCameraID());
+        return;
+    }
 	if (notMatchedCloudPoints.size() == 0)
 		return;
-    uint32_t imgWidth = m_camParams.resolution.width;
-    uint32_t imgHeight = m_camParams.resolution.height;
+    uint32_t imgWidth = camParams->resolution.width;
+    uint32_t imgHeight =  camParams->resolution.height;
 	float updateWindows = RATIO_UPDATE_WINDOWS * imgWidth;
 	float borderImage = RATIO_BORDER_IMAGE * imgWidth;
 	std::vector<Point2Df> pts2dInliers;
@@ -190,7 +198,7 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 		}
 	}
 	std::vector< Point2Df > projected2DPts;
-	m_projector->project(notMatchedCloudPoints, projected2DPts, newKeyframe->getPose());
+    m_projector->project(notMatchedCloudPoints, newKeyframe->getPose(), *camParams, projected2DPts);
 	for (int i = 0; i < notMatchedCloudPoints.size(); ++i) {
 		if ((projected2DPts[i].getX() < borderImage) || (projected2DPts[i].getX() > imgWidth - borderImage) ||
 			(projected2DPts[i].getY() < borderImage) || (projected2DPts[i].getY() > imgHeight - borderImage))
@@ -213,7 +221,13 @@ void SolARMapUpdate::defineInvalidCloudPoints(SRef<datastructure::Keyframe> newK
 		if (m_keyframeCollection->getKeyframe(idKf, tmpKf) != FrameworkReturnCode::_SUCCESS)
 			continue;
 		std::vector< Point2Df > tracked3DPtsProjected;
-		m_projector->project(tracked3Dpts, tracked3DPtsProjected, tmpKf->getPose());
+        SRef<CameraParameters> camParamsTmp;
+        if (m_cameraParametersManager->getCameraParameters(tmpKf->getCameraID(), camParamsTmp) != FrameworkReturnCode :: _SUCCESS)
+        {
+            LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", tmpKf->getCameraID());
+            continue;
+        }
+        m_projector->project(tracked3Dpts, tmpKf->getPose(),  *camParamsTmp, tracked3DPtsProjected);
 		const Keypoint& tmpKp = tmpKf->getKeypoint(itVis->second);
 		for (const auto &it : tracked3DPtsProjected)
 			if ((it - tmpKp).norm() < updateWindows) {

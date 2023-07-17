@@ -2,5 +2,4 @@ SolArModulePipeline {
     moduleName="SolARModuleTools"
     dirName="SolARBuild"
     runTests=true
-    android=true
 }

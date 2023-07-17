@@ -70,11 +70,6 @@ public:
     ///@brief SolAR3DTransformEstimationFrom3D3D destructor;
     ~SolAR3DTransformEstimationSACFrom3D3D() = default;
 
-	/// @brief this method is used to set intrinsic parameters and distorsion of the camera
-	/// @param[in] intrinsicParams: Camera calibration matrix parameters.
-	/// @param[in] distortionParams: Camera distortion parameters.
-	void setCameraParameters(const SolAR::datastructure::CamCalibration & intrinsicParams, const SolAR::datastructure::CamDistortion & distortionParams) override;
-
 	/// @brief Estimates camera pose from a set of 3D-3D point correspondences.
 	/// @param[in] firstPoints3D: first set of 3D points.
 	/// @param[in] secondPoints3D: second set of 3D points.
@@ -95,6 +90,8 @@ public:
 	/// @param[out] inliers: indices of inlier correspondences.
     FrameworkReturnCode estimate(const SRef<SolAR::datastructure::Keyframe> firstKeyframe,
                                 const SRef<SolAR::datastructure::Keyframe> secondKeyframe,
+                                const SolAR::datastructure::CameraParameters & firstCameraParameters,
+                                const SolAR::datastructure::CameraParameters & secondCameraParameters,
 								const std::vector<SolAR::datastructure::DescriptorMatch> &matches,
 								const std::vector<SolAR::datastructure::Point3Df> & firstPoints3D,
 								const std::vector<SolAR::datastructure::Point3Df> & secondPoints3D,
@@ -128,13 +125,7 @@ private:
 	SRef<SolAR::api::geom::IProject> m_projector;
 	
 	/// @brief Bundler
-	SRef<api::solver::map::IBundler> m_bundler;
-	
-	/// @brief intrinsic parameters
-	SolAR::datastructure::CamCalibration m_intrinsicParams;
-	
-	/// @brief distortion parameters
-	SolAR::datastructure::CamDistortion m_distortionParams;
+    SRef<api::solver::map::IBundler> m_bundler;
 };
 
 }

@@ -33,6 +33,8 @@ namespace TOOLS {
 SolARLoopCorrector::SolARLoopCorrector():ConfigurableBase(xpcf::toUUID<SolARLoopCorrector>())
 {
     addInterface<SolAR::api::loop::ILoopCorrector>(this);
+    declareInjectable<storage::IMapManager>(m_mapManager);
+    declareInjectable<storage::ICameraParametersManager>(m_cameraParametersManager);
     declareInjectable<storage::IKeyframesManager>(m_keyframesManager);
     declareInjectable<storage::IPointCloudManager>(m_pointCloudManager);
     declareInjectable<storage::ICovisibilityGraphManager>(m_covisibilityGraphManager);
@@ -40,12 +42,6 @@ SolARLoopCorrector::SolARLoopCorrector():ConfigurableBase(xpcf::toUUID<SolARLoop
     declareInjectable<geom::I3DTransform>(m_transform3D);
     declareInjectable<geom::IProject>(m_projector);
 	LOG_DEBUG("SolARLoopCorrector constructor");
-}
-
-void SolARLoopCorrector::setCameraParameters(const CamCalibration & intrinsicParams, const CamDistortion & distortionParams) {
-	m_camMatrix = intrinsicParams;
-	m_camDistortion = distortionParams;
-	m_projector->setCameraParameters(intrinsicParams, distortionParams);
 }
 
 void SolARLoopCorrector::getLocalMapPoints(const std::map<uint32_t, SRef<Keyframe> > &connectedKfs, std::vector<SRef<CloudPoint>>& localMapPoints)
@@ -158,7 +154,13 @@ FrameworkReturnCode SolARLoopCorrector::correct(const SRef<Keyframe> queryKeyfra
 			}
 		// projection points
 		std::vector< Point2Df > projected2DPts;
-		m_projector->project(uncheckCurrentlocalCPs, projected2DPts, keyframe->getPose());
+        SRef<CameraParameters> camParams;
+        if (m_cameraParametersManager->getCameraParameters(keyframe->getCameraID(), camParams) != FrameworkReturnCode :: _SUCCESS)
+        {
+            LOG_WARNING("Camera parameteres with id {} does not exists in the camera parameters manager", keyframe->getCameraID());
+            continue;
+        }
+        m_projector->project(uncheckCurrentlocalCPs, keyframe->getPose(), *camParams, projected2DPts);
 		// Matching features
 		std::vector<DescriptorMatch> matches;
 		m_matcher->match(projected2DPts, desUncheckCurrentlocalCPs, keyframe, matches, 5.f);
